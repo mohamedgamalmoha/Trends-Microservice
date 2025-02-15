@@ -1,0 +1,37 @@
+services:
+    users-serv:
+        container_name: users-con
+        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload
+        build:
+            context: ./users
+            dockerfile: Dockerfile
+        env_file:
+          - ./users/.env
+        volumes:
+          - ./users:/app
+        depends_on:
+          - users-db-serv
+        networks:
+          - users-network
+        ports:
+          - "8080:80"
+
+    users-db-serv:
+        image: postgres:latest
+        container_name: users-db-con
+        restart: always
+        environment:
+            POSTGRES_USER: users_db_user
+            POSTGRES_PASSWORD: 123456
+            POSTGRES_DB: users_db
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+        networks:
+          - users-network
+
+volumes:
+    postgres_data:
+
+networks:
+    users-network:
+        driver: bridge
