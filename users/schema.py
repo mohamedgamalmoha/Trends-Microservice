@@ -14,6 +14,14 @@ class UserCreate(pydantic.BaseModel):
        from_attributes=True
 
 
+class UserLogin(pydantic.BaseModel):
+    email: pydantic.EmailStr
+    password: str
+
+    class Config:
+       from_attributes=True
+
+
 class UserUpdate(pydantic.BaseModel):
     first_name: str
     last_name: str
