@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 import constants
 from conf import settings
+from query import get_user_by_email
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -70,3 +71,12 @@ def decode_access_token(token: str) -> Dict[str, Any]:
         )
     else:
         return payload
+
+
+async def authenticate_user(email: str, password: str):
+    user = await get_user_by_email(email=email)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
