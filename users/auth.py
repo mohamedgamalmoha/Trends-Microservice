@@ -1,11 +1,14 @@
-from typing import Dict, Any
+from typing import Dict, Any, Type
 from datetime import datetime, timedelta
 
 import jwt
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+import messages
 from conf import settings
+from models import User
 from query import get_user_by_email
 from exceptions import InvalidTokenError, TokenExpiredError
 
@@ -70,3 +73,26 @@ def authenticate_user(email: str, password: str):
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> Type[User]:
+    try:
+        payload = decode_access_token(token)
+        user = get_user_by_email(payload["email"])
+        if not user:
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=messages.INVALID_TOKEN_MESSAGE
+        )
+    except (TokenExpiredError, InvalidTokenError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=messages.INVALID_TOKEN_MESSAGE
+        )
+    else:
+        return user
