@@ -8,7 +8,7 @@ from db import get_db
 from models import User
 
 
-def is_user_exist(username: str, email: str, db: Session = Depends(get_db)) -> bool:
+def is_user_exist(email: str, username: str, db: Session = Depends(get_db)) -> bool:
     exists_query = db.query(
         exists().where(
             or_(
