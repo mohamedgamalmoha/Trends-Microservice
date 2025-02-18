@@ -44,3 +44,8 @@ class UserRetrieve(pydantic.BaseModel):
 
     class Config:
        from_attributes=True
+
+
+class Token(pydantic.BaseModel):
+    access_token: str
+    token_type: str
