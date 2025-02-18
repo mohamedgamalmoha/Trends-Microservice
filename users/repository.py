@@ -1,3 +1,5 @@
+from typing import Type
+
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
@@ -25,8 +27,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
     return db_user
 
 
-async def update_user(email: str, user: UserUpdate, db: Session = Depends(get_db)) -> User:
-    db_user = await get_user_by_email(email)
+def update_user(email: str, user: UserUpdate, db: Session = Depends(get_db)) -> Type[User] | None:
+    db_user = get_user_by_email(email)
 
     if user.first_name and db_user.first_name != user.first_name:
         db_user.first_name = user.first_name
@@ -43,7 +45,7 @@ async def update_user(email: str, user: UserUpdate, db: Session = Depends(get_db
     return db_user
 
 
-async def delete_user(email: str, db: Session = Depends(get_db)) -> None:
-    db_user = await get_user_by_email(email)
+def delete_user(email: str, db: Session = Depends(get_db)) -> None:
+    db_user = get_user_by_email(email)
     db.delete(db_user)
     db.commit()
