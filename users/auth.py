@@ -3,12 +3,11 @@ from datetime import datetime, timedelta
 
 import jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-import constants
 from conf import settings
 from query import get_user_by_email
+from exceptions import InvalidTokenError, TokenExpiredError
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -25,17 +24,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(payload: dict, expires_delta: timedelta | None = None) -> str:
-    assert 'sub' in payload
-
-    jwt_payload = payload.copy()
+def create_access_token(email: str, expires_delta: timedelta | None = None) -> str:
 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    jwt_payload.update({"exp": expire})
+    jwt_payload = {
+        'email': email,
+        'expire': expire
+    }
 
     encoded_jwt = jwt.encode(
         payload=jwt_payload,
@@ -53,28 +52,19 @@ def decode_access_token(token: str) -> Dict[str, Any]:
             key=settings.SECRET_KEY,
             algorithms=[settings.ACCESS_TOKEN_ALGORITHM]
         )
-        username = payload.get("sub")
-        if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=constants.INVALID_TOKEN_MESSAGE
-            )
+        email = payload.get("email")
+        if email is None:
+            raise InvalidTokenError()
     except jwt.exceptions.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=constants.EXPIRED_TOKEN_MESSAGE
-        )
+        raise TokenExpiredError()
     except (jwt.exceptions.DecodeError, jwt.PyJWTError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=constants.INVALID_TOKEN_MESSAGE
-        )
+        raise InvalidTokenError()
     else:
         return payload
 
 
-async def authenticate_user(email: str, password: str):
-    user = await get_user_by_email(email=email)
+def authenticate_user(email: str, password: str):
+    user = get_user_by_email(email=email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
