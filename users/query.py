@@ -9,27 +9,26 @@ from models import User
 
 
 def is_user_exist(email: str, username: str, db: Session = Depends(get_db)) -> bool:
-    exists_query = db.query(
+    return db.query(
         exists().where(
             or_(
                 User.email == email,
                 User.username == username
             )
         )
-    )
-    return db.query(exists_query).scalar()
+    ).scalar()
 
 
 def get_user_by_id(id: int, db: Session = Depends(get_db)) -> Type[User] | None:
-    return db.query(User).filter_by(id=id, is_verified=True).first()
+    return db.query(User).filter_by(id=id, is_active=True).first()
 
 
 def get_user_by_email(email: str, db: Session = Depends(get_db)) -> Type[User] | None:
-    return db.query(User).filter_by(email=email, is_verified=True).first()
+    return db.query(User).filter_by(email=email, is_active=True).first()
 
 
 def get_user_by_username(username: str, db: Session = Depends(get_db))-> Type[User] | None:
-    return db.query(User).filter_by(username=username, is_verified=True).first()
+    return db.query(User).filter_by(username=username, is_active=True).first()
 
 
 def get_all_users(db: Session = Depends(get_db)) -> List[Type[User]]:
