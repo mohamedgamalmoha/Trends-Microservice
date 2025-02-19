@@ -23,6 +23,15 @@ class UserCreate(pydantic.BaseModel):
         return self
 
 
+class AdminUserCreate(pydantic.BaseModel):
+    email: pydantic.EmailStr
+    username: str = pydantic.Field(min_length=8, max_length=200)
+    password: str =  pydantic.Field(min_length=8, max_length=20)
+
+    class Config:
+        from_attributes=True
+
+
 class UserLogin(pydantic.BaseModel):
     email: pydantic.EmailStr
     password: str

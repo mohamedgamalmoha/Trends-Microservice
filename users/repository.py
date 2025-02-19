@@ -7,7 +7,7 @@ from db import get_db
 from models import User
 from auth import hash_password
 from query import get_user_by_id
-from schema import UserCreate, UserUpdate
+from schema import UserCreate, AdminUserCreate, UserUpdate
 
 
 def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
@@ -17,6 +17,22 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
         first_name=user.first_name,
         last_name=user.last_name,
         phone_number=user.phone_number,
+        hashed_password=hash_password(user.password)
+    )
+
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
+
+
+def create_admin_user(user: AdminUserCreate, db: Session = Depends(get_db)) -> User:
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        ia_active=True,
+        ia_admin=True,
         hashed_password=hash_password(user.password)
     )
 
