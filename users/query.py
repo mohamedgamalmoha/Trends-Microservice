@@ -5,7 +5,7 @@ from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_db
-from src.users.models import User
+from models import User
 
 
 async def is_user_exist(email: str, username: str, db: AsyncSession = Depends(get_db)) -> bool:
