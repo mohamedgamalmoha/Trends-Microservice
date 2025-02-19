@@ -25,7 +25,7 @@ def create_jwt_route(user_data: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(email=user.email)
 
-    return Token(access_token=access_token, token_type='Bearer')
+    return Token(access_token=access_token)
 
 
 @app.post('/api/users/', status_code=status.HTTP_201_CREATED, response_model=UserRetrieve)
