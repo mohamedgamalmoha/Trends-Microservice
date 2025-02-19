@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from db import get_db
 from models import User
 from auth import hash_password
-from query import get_user_by_email
+from query import get_user_by_id
 from schema import UserCreate, UserUpdate
 
 
@@ -27,8 +27,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)) -> User:
     return db_user
 
 
-def update_user(email: str, user: UserUpdate, db: Session = Depends(get_db)) -> Type[User] | None:
-    db_user = get_user_by_email(email)
+def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)) -> Type[User] | None:
+    db_user = get_user_by_id(user_id)
 
     if user.first_name and db_user.first_name != user.first_name:
         db_user.first_name = user.first_name
@@ -45,7 +45,7 @@ def update_user(email: str, user: UserUpdate, db: Session = Depends(get_db)) -> 
     return db_user
 
 
-def delete_user(email: str, db: Session = Depends(get_db)) -> None:
-    db_user = get_user_by_email(email)
+def delete_user(user_id: int, db: Session = Depends(get_db)) -> None:
+    db_user = get_user_by_id(user_id)
     db.delete(db_user)
     db.commit()
