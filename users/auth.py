@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
@@ -69,8 +69,8 @@ def decode_access_token(token: str) -> Dict[str, Any]:
         return payload
 
 
-def authenticate_user(email: str, password: str, db: Session = Depends(get_db)):
-    user = get_user_by_email(email=email, db=db)
+async def authenticate_user(email: str, password: str, db: AsyncSession = Depends(get_db)):
+    user = await get_user_by_email(email=email, db=db)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -78,10 +78,10 @@ def authenticate_user(email: str, password: str, db: Session = Depends(get_db)):
     return user
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Type[User]:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Type[User]:
     try:
         payload = decode_access_token(token)
-        user = get_user_by_email(email=payload["email"], db=db)
+        user = await get_user_by_email(email=payload["email"], db=db)
         if not user:
             raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
