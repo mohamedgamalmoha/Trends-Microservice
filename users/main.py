@@ -1,12 +1,9 @@
 from fastapi import FastAPI
 
-import models
-from db import engine
+from db import lifespan
 
 
-app = FastAPI()
-
-models.Base.metadata.create_all(bind=engine)
+app = FastAPI(lifespan=lifespan)
 
 
 from routes import *
