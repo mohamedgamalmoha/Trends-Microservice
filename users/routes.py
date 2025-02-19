@@ -48,8 +48,14 @@ async def get_user_route(user_id: int, current_user: User = Depends(get_current_
                          db: AsyncSession = Depends(get_db)):
     user = await get_user_by_id(id=user_id, db=db)
 
-    if user and (current_user.is_admin or current_user.id == user_id):
+    if user:
+        if current_user.is_admin or current_user.id == user_id:
             return user
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=messages.USER_FORBIDDEN_MESSAGE
+            )
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -59,8 +65,15 @@ async def get_user_route(user_id: int, current_user: User = Depends(get_current_
 
 @app.get('/api/users/', status_code=status.HTTP_200_OK, response_model=List[UserRetrieve])
 async def get_users_route(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    users = get_all_users(db=db)
-    return users
+
+    if current_user.is_admin:
+        users = get_all_users(db=db)
+        return users
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=messages.USER_FORBIDDEN_MESSAGE
+    )
 
 
 @app.delete('/api/users/{user_id}/', status_code=status.HTTP_204_NO_CONTENT)
@@ -68,9 +81,15 @@ async def delete_user_route(user_id: int, current_user: User = Depends(get_curre
                             db: AsyncSession = Depends(get_db)):
     user = await get_user_by_id(id=user_id, db=db)
 
-    if user and (current_user.is_admin or current_user.id == user_id):
-        await delete_user(user_id=user_id, db=db)
-        return
+    if user:
+        if current_user.is_admin or current_user.id == user_id:
+            await delete_user(user_id=user_id, db=db)
+            return
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=messages.USER_FORBIDDEN_MESSAGE
+            )
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -81,4 +100,18 @@ async def delete_user_route(user_id: int, current_user: User = Depends(get_curre
 @app.put('/api/users/{user_id}/', status_code=status.HTTP_200_OK, response_model=UserRetrieve)
 async def update_user_route(user_id: int, user_data: UserUpdate, current_user: User = Depends(get_current_user),
                       db: AsyncSession = Depends(get_db)):
-    return await update_user(user_id=user_id, user=user_data, db=db)
+    user = await get_user_by_id(id=user_id, db=db)
+
+    if user:
+        if current_user.is_admin or current_user.id == user_id:
+            return await update_user(user_id=user_id, user=user_data, db=db)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=messages.USER_FORBIDDEN_MESSAGE
+            )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=messages.USER_NOT_FOUND_MESSAGE
+    )
