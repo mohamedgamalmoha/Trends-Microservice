@@ -1,5 +1,5 @@
 from typing import Dict, Any, Type
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from passlib.context import CryptContext
@@ -32,19 +32,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(email: str, expires_delta: timedelta | None = None) -> str:
 
     if expires_delta:
-        expire = datetime.now() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     jwt_payload = {
         'email': email,
-        'expire': expire
+        'expire': expire.isoformat()
     }
 
     encoded_jwt = jwt.encode(
         payload=jwt_payload,
         key=settings.SECRET_KEY,
-        algorithm=[settings.ACCESS_TOKEN_ALGORITHM]
+        algorithm=settings.ACCESS_TOKEN_ALGORITHM
     )
 
     return encoded_jwt
@@ -53,9 +53,10 @@ def create_access_token(email: str, expires_delta: timedelta | None = None) -> s
 def decode_access_token(token: str) -> Dict[str, Any]:
     try:
         payload = jwt.decode(
-            message=token,
+            jwt=token,
             key=settings.SECRET_KEY,
-            algorithms=[settings.ACCESS_TOKEN_ALGORITHM]
+            algorithms=[settings.ACCESS_TOKEN_ALGORITHM],
+            options={"verify_exp": False}
         )
         email = payload.get("email")
         if email is None:
