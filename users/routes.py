@@ -28,6 +28,11 @@ async def create_jwt_route(user_data: UserLogin, db: AsyncSession = Depends(get_
     return Token(access_token=access_token)
 
 
+@app.get('/api/users/me/', status_code=status.HTTP_200_OK, response_model=UserRetrieve)
+async def get_user_route(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    return current_user
+
+
 @app.post('/api/users/', status_code=status.HTTP_201_CREATED, response_model=UserRetrieve)
 async def create_user_route(user_data: UserCreate,  db: AsyncSession = Depends(get_db)):
     db_user = await is_user_exist(username=user_data.username, email=user_data.email, db=db)
