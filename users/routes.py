@@ -38,6 +38,11 @@ async def create_jwt_route(user_data: UserLogin, db: AsyncSession = Depends(get_
     return Token(access_token=access_token)
 
 
+@auth_router.get('/verify/', status_code=status.HTTP_204_NO_CONTENT)
+async def verify_jwt_token_route(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    ...
+
+
 @user_router.get('/me/', status_code=status.HTTP_200_OK, response_model=UserRetrieve)
 async def get_user_route(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     return current_user
