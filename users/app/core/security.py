@@ -1,18 +1,12 @@
-from typing import Dict, Any, Type
+from typing import Dict, Any
 from datetime import datetime, timedelta, timezone
 
 import jwt
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-import messages
-from conf import settings
-from db import get_db
-from models import User
-from query import get_user_by_email
-from exceptions import InvalidTokenError, TokenExpiredError
+from app.core.conf import settings
+from app.exceptions import InvalidTokenError, TokenExpiredError
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -67,35 +61,3 @@ def decode_access_token(token: str) -> Dict[str, Any]:
         raise InvalidTokenError()
     else:
         return payload
-
-
-async def authenticate_user(email: str, password: str, db: AsyncSession = Depends(get_db)):
-    user = await get_user_by_email(email=email, db=db)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Type[User]:
-    try:
-        payload = decode_access_token(token)
-        user = await get_user_by_email(email=payload["email"], db=db)
-        if not user:
-            raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=messages.INVALID_TOKEN_MESSAGE
-        )
-    except (TokenExpiredError, InvalidTokenError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=messages.INVALID_TOKEN_MESSAGE
-        )
-    else:
-        return user

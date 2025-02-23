@@ -1,4 +1,4 @@
-import messages
+from app import messages
 
 
 class TokenError(Exception):

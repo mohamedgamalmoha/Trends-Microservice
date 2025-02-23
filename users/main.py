@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-
-from db import lifespan
-from routes import auth_router, user_router
-
+from app.db import lifespan
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(auth_router, prefix='/api')
-app.include_router(user_router, prefix='/api')
+
+from app.api.endpoints import auth, users
+
+
+app.include_router(auth.auth_router, prefix='/api')
+app.include_router(users.user_router, prefix='/api')

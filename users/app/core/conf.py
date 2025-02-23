@@ -5,7 +5,7 @@ import dotenv
 from pydantic_settings import BaseSettings
 
 
-dotenv.load_dotenv()
+dotenv.load_dotenv('../../.env')
 
 logging.basicConfig(level=logging.INFO)
 
