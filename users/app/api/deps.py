@@ -40,3 +40,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         )
     else:
         return user
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=messages.USER_FORBIDDEN_MESSAGE
+        )
+    return current_user

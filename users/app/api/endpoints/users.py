@@ -9,7 +9,7 @@ from app.models.user import User
 from app.repositories.user import (create_user, is_user_exist, get_user_by_id, get_user_by_email, get_all_users,
                                    update_user, delete_user)
 from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserRetrieve
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_admin_user
 
 
 user_router = APIRouter(
@@ -59,7 +59,7 @@ async def get_user_route(user_id: int, current_user: User = Depends(get_current_
 
 
 @user_router.get('/', status_code=status.HTTP_200_OK, response_model=List[UserRetrieve])
-async def get_users_route(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_users_route(current_user: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
 
     if current_user.is_admin:
         users = get_all_users(db=db)
