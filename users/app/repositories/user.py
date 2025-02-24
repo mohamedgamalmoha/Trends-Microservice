@@ -20,10 +20,9 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)) -> U
         hashed_password=hash_password(user.password)
     )
 
-    async with db.begin():
-        db.add(db_user)
-        await db.commit()
-        await db.refresh(db_user)
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
 
     return db_user
 
@@ -37,10 +36,9 @@ async def _create_admin_user(user: _AdminUserCreate, db: AsyncSession = Depends(
         hashed_password=hash_password(user.password)
     )
 
-    async with db.begin():
-        db.add(db_user)
-        await db.commit()
-        await db.refresh(db_user)
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
 
     return db_user
 
@@ -121,9 +119,8 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     if user.phone_number and db_user.phone_number != user.phone_number:
         db_user.phone_number = user.phone_number
 
-    async with db.begin():
-        await db.commit()
-        await db.refresh(db_user)
+    await db.commit()
+    await db.refresh(db_user)
 
     return db_user
 
@@ -134,6 +131,5 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)) -> None:
     if not db_user:
         return None
 
-    async with db.begin():
-        await db.delete(db_user)
-        await db.commit()
+    await db.delete(db_user)
+    await db.commit()
