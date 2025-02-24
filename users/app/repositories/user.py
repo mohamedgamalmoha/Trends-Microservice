@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.core.security import hash_password
 from app.schemas.user import UserCreate, UserUpdate, _AdminUserCreate

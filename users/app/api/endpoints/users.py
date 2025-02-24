@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import messages
-from app.db import get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.repositories.user import (create_user, is_user_exist, get_user_by_id, get_user_by_email, get_all_users,
                                    update_user, delete_user)

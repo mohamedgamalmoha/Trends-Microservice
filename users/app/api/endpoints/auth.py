@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import messages
-from app.db import get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.core.security import create_access_token
 from app.schemas.token import Token

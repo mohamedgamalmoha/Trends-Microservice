@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 
 from app import messages
-from app.db import get_db
+from app.db.session import get_db
 from app.models.user import User
 from app.repositories.user import get_user_by_email
 from app.core.security import oauth2_scheme, decode_access_token, verify_password
