@@ -2,7 +2,7 @@ services:
     users-serv:
         container_name: users-con
         command: uvicorn main:app --host 0.0.0.0 --port 80 --reload
-        restart: unless-stopped
+        restart: always
         build:
             context: ./users
             dockerfile: Dockerfile
@@ -30,6 +30,23 @@ services:
           - postgres_data:/var/lib/postgresql/data
         networks:
           - global-network
+
+    notification-serv:
+        container_name: notification-con
+        command: python main.py
+        restart: unless-stopped
+        build:
+            context: ./notification
+            dockerfile: Dockerfile
+        env_file:
+            - ./notification/.env
+        volumes:
+            - ./notification:/app
+        networks:
+            - global-network
+        depends_on:
+            - rabbitmq
+            - users-serv
 
     rabbitmq:
         container_name: rabbitmq-con
