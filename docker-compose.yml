@@ -2,6 +2,7 @@ services:
     users-serv:
         container_name: users-con
         command: uvicorn main:app --host 0.0.0.0 --port 80 --reload
+        restart: unless-stopped
         build:
             context: ./users
             dockerfile: Dockerfile
@@ -11,15 +12,16 @@ services:
           - ./users:/app
         depends_on:
           - users-db-serv
+          - rabbitmq
         networks:
-          - users-network
+          - global-network
         ports:
           - "8080:80"
 
     users-db-serv:
         image: postgres:latest
         container_name: users-db-con
-        restart: always
+        restart: unless-stopped
         environment:
             POSTGRES_USER: users_db_user
             POSTGRES_PASSWORD: 123456
@@ -27,11 +29,23 @@ services:
         volumes:
           - postgres_data:/var/lib/postgresql/data
         networks:
-          - users-network
+          - global-network
+
+    rabbitmq:
+        container_name: rabbitmq-con
+        image: rabbitmq:4.0.6-alpine
+        restart: unless-stopped
+        environment:
+            - RABBITMQ_ENABLED_PLUGINS=[]
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        networks:
+            - global-network
 
 volumes:
     postgres_data:
+    rabbitmq_data:
 
 networks:
-    users-network:
+    global-network:
         driver: bridge
