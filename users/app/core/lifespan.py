@@ -2,15 +2,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.db.base import Base
-from app.db.session import engine
+from app.producer.api import init_producer
+from app.db.session import init_db, close_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await init_db()
+    await init_producer()
 
     yield
 
-    await engine.dispose()
+    await close_db()

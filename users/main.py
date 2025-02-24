@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.db.lifespan import lifespan
+from app.core.lifespan import lifespan
 from app.api.endpoints import auth, users
 
 
