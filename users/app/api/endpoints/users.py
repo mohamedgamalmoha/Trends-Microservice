@@ -10,6 +10,7 @@ from app.repositories.user import (create_user, is_user_exist, get_user_by_id, g
                                    update_user, delete_user)
 from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserRetrieve
 from app.api.deps import get_current_user, get_current_admin_user
+from app.producer.api import send_user_creation_message, send_user_email_verification_message
 
 
 user_router = APIRouter(
@@ -35,6 +36,9 @@ async def create_user_route(user_data: UserCreate, db: AsyncSession = Depends(ge
     db_user = await create_user(user=user_data, db=db)
 
     ret_user = UserRetrieve.from_orm(db_user)
+
+    await send_user_creation_message(ret_user)
+    await send_user_email_verification_message(ret_user)
 
     return ret_user
 
