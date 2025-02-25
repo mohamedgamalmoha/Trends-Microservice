@@ -24,9 +24,8 @@ async def get_user_route(current_user: User = Depends(get_current_user), db: Asy
 
 
 @user_router.post('/', status_code=status.HTTP_201_CREATED, response_model=UserRetrieve)
-async def create_user_route(user_data: UserCreate,  db: AsyncSession = Depends(get_db)):
+async def create_user_route(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     db_user = await is_user_exist(username=user_data.username, email=user_data.email, db=db)
-
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -35,7 +34,9 @@ async def create_user_route(user_data: UserCreate,  db: AsyncSession = Depends(g
 
     db_user = await create_user(user=user_data, db=db)
 
-    return db_user
+    ret_user = UserRetrieve.from_orm(db_user)
+
+    return ret_user
 
 
 @user_router.get('/{user_id}/', status_code=status.HTTP_200_OK, response_model=UserRetrieve)
@@ -62,7 +63,7 @@ async def get_user_route(user_id: int, current_user: User = Depends(get_current_
 async def get_users_route(current_user: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
 
     if current_user.is_admin:
-        users = get_all_users(db=db)
+        users = await get_all_users(db=db)
         return users
 
     raise HTTPException(
