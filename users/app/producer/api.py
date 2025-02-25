@@ -1,3 +1,4 @@
+from app.utils import safe_call
 from app.schemas.user import UserRetrieve
 from app.producer.producer import UserMessageProducer
 from app.producer.conf import settings, USER_RABBITMQ_EXCHANGE, USER_RABBITMQ_QUEUES
@@ -11,6 +12,7 @@ def get_producer() -> UserMessageProducer:
     )
 
 
+@safe_call
 async def init_producer() -> None:
     producer = get_producer()
     await producer.init_user_producer()

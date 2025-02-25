@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 
 from app.db.base import Base
 from app.core.conf import settings
+from app.utils import safe_call
 
 
 engine = create_async_engine(
@@ -11,11 +12,13 @@ engine = create_async_engine(
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autocommit=False)
 
 
+@safe_call
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
+@safe_call
 async def close_db() -> None:
     await engine.dispose()
 
