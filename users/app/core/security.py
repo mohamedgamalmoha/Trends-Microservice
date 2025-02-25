@@ -23,12 +23,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(email: str, expires_delta: timedelta | None = None) -> str:
+def create_token(email: str, expires_minutes: int, key: str, algorithm: str) -> str:
 
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
 
     jwt_payload = {
         'email': email,
@@ -37,19 +34,19 @@ def create_access_token(email: str, expires_delta: timedelta | None = None) -> s
 
     encoded_jwt = jwt.encode(
         payload=jwt_payload,
-        key=settings.SECRET_KEY,
-        algorithm=settings.ACCESS_TOKEN_ALGORITHM
+        key=key,
+        algorithm=algorithm
     )
 
     return encoded_jwt
 
 
-def decode_access_token(token: str) -> Dict[str, Any]:
+def decode_token(token: str, key: str, algorithm: str) -> Dict[str, Any]:
     try:
         payload = jwt.decode(
             jwt=token,
-            key=settings.SECRET_KEY,
-            algorithms=[settings.ACCESS_TOKEN_ALGORITHM],
+            key=key,
+            algorithms=[algorithm],
             options={"verify_exp": False}
         )
         email = payload.get("email")
