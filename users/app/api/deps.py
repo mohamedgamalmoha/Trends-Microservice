@@ -1,4 +1,3 @@
-from typing import Type
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 
@@ -10,7 +9,7 @@ from app.core.security import oauth2_scheme, decode_access_token, verify_passwor
 from app.exceptions import InvalidTokenError, TokenExpiredError
 
 
-async def authenticate_user(email: str, password: str, db: AsyncSession = Depends(get_db)):
+async def authenticate_user(email: str, password: str, db: AsyncSession = Depends(get_db)) -> User | None:
     user = await get_user_by_email(email=email, db=db)
     if not user:
         return None
@@ -19,7 +18,7 @@ async def authenticate_user(email: str, password: str, db: AsyncSession = Depend
     return user
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Type[User]:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
     try:
         payload = decode_access_token(token)
         user = await get_user_by_email(email=payload["email"], db=db)
@@ -42,7 +41,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         return user
 
 
-def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
