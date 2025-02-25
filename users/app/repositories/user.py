@@ -117,6 +117,20 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     return db_user
 
 
+async def activate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
+    db_user = await get_user_by_id(user_id, db)
+
+    if not db_user:
+        return None
+
+    db_user.is_active = True
+
+    await db.commit()
+    await db.refresh(db_user)
+
+    return db_user
+
+
 async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)) -> None:
     db_user = await get_user_by_id(user_id, db)
 
