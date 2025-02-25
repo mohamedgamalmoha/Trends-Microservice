@@ -12,11 +12,7 @@ from app.schemas.user import UserCreate, UserUpdate, _AdminUserCreate
 
 async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
     db_user = User(
-        username=user.username,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone_number=user.phone_number,
+        **user.model_dump(exclude=['password', 'password_confirm']),
         hashed_password=hash_password(user.password)
     )
 
@@ -110,14 +106,10 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     if not db_user:
         return None
 
-    if user.first_name and db_user.first_name != user.first_name:
-        db_user.first_name = user.first_name
-
-    if user.last_name and db_user.last_name != user.last_name:
-        db_user.last_name = user.last_name
-
-    if user.phone_number and db_user.phone_number != user.phone_number:
-        db_user.phone_number = user.phone_number
+    user_update = user.model_dump()
+    for field_name, new_field_value in user_update.items():
+        if new_field_value:
+            setattr(db_user, field_name, new_field_value)
 
     await db.commit()
     await db.refresh(db_user)
