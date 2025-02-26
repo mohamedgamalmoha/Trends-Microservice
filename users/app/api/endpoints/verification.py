@@ -46,7 +46,7 @@ async def send_email_verification(user_data: UserEmailVerification, db: AsyncSes
     await send_user_email_verification_message(user_data=user)
 
 
-@email_verification_router.post("/confirm/{verification}/", status_code=status.HTTP_204_NO_CONTENT)
+@email_verification_router.post("/confirm/", status_code=status.HTTP_204_NO_CONTENT)
 async def confirm_email_verification(user_data: UserEmailVerificationConfirmation, db: AsyncSession = Depends(get_db)):
     pyload =  decode_email_verification_token(token=user_data.verification_token)
     email = pyload.get('email', None)
