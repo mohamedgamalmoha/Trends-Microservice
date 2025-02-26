@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from app import messages
 from app.db.session import get_db
 from app.repositories.user import get_user_by_email, activate_user
+from app.schemas.verification import UserEmailVerification, UserEmailVerificationConfirmation
 from app.schemas.producer import UserEmailVerificationProducerMessage
 from app.utils import db_model_to_dict
 from app.producer.api import send_user_email_verification_message
@@ -18,9 +19,9 @@ email_verification_router = APIRouter(
 )
 
 
-@email_verification_router.post("/{email}/", status_code=status.HTTP_204_NO_CONTENT)
-async def send_email_verification(email: str, db: AsyncSession = Depends(get_db)):
-    db_user = await get_user_by_email(email=email, db=db)
+@email_verification_router.post("/", status_code=status.HTTP_204_NO_CONTENT)
+async def send_email_verification(user_data: UserEmailVerification, db: AsyncSession = Depends(get_db)):
+    db_user = await get_user_by_email(email=user_data.email, db=db)
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -33,12 +34,12 @@ async def send_email_verification(email: str, db: AsyncSession = Depends(get_db)
             detail=messages.USER_ALREADY_ACTIVE
         )
 
-    user_data = db_model_to_dict(instance=db_user)
+    user_data_dict = db_model_to_dict(instance=db_user)
 
-    verification_token = create_email_verification_token(email=email)
+    verification_token = create_email_verification_token(email=user_data.email)
 
     user = UserEmailVerificationProducerMessage(
-        **user_data,
+        **user_data_dict,
         verification_token=verification_token
     )
 
@@ -46,8 +47,8 @@ async def send_email_verification(email: str, db: AsyncSession = Depends(get_db)
 
 
 @email_verification_router.post("/confirm/{verification}/", status_code=status.HTTP_204_NO_CONTENT)
-async def confirm_email_verification(verification: str, db: AsyncSession = Depends(get_db)):
-    pyload =  decode_email_verification_token(token=verification)
+async def confirm_email_verification(user_data: UserEmailVerificationConfirmation, db: AsyncSession = Depends(get_db)):
+    pyload =  decode_email_verification_token(token=user_data.verification_token)
     email = pyload.get('email', None)
 
     db_user = await get_user_by_email(email=email, db=db)
