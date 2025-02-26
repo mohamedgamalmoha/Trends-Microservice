@@ -1,7 +1,7 @@
 services:
     users-serv:
         container_name: users-con
-        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload
+        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
         restart: always
         build:
             context: ./users
