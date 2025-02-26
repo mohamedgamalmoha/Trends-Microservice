@@ -117,13 +117,27 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     return db_user
 
 
-async def activate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
+async def activate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> User | None:
     db_user = await get_user_by_id(user_id, db)
 
     if not db_user:
         return None
 
     db_user.is_active = True
+
+    await db.commit()
+    await db.refresh(db_user)
+
+    return db_user
+
+
+async def reset_user_password(user_id: int, new_password:str, db: AsyncSession = Depends(get_db)) -> User | None:
+    db_user = await get_user_by_id(user_id, db)
+
+    if not db_user:
+        return None
+
+    db_user.password = hash_password(new_password)
 
     await db.commit()
     await db.refresh(db_user)
