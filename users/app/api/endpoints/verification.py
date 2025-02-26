@@ -1,0 +1,69 @@
+from datetime import datetime
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, HTTPException, status, APIRouter
+
+from app import messages
+from app.db.session import get_db
+from app.repositories.user import get_user_by_email, activate_user
+from app.schemas.producer import UserEmailVerificationProducerMessage
+from app.utils import db_model_to_dict
+from app.producer.api import send_user_email_verification_message
+from app.api.deps import create_email_verification_token, decode_email_verification_token
+
+
+email_verification_router = APIRouter(
+    prefix="/email-verification",
+    tags=["email-verification"]
+)
+
+
+@email_verification_router.post("/{email}/", status_code=status.HTTP_204_NO_CONTENT)
+async def send_email_verification(email: str, db: AsyncSession = Depends(get_db)):
+    db_user = await get_user_by_email(email=email, db=db)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.USER_NOT_FOUND_MESSAGE
+        )
+
+    if db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=messages.USER_ALREADY_ACTIVE
+        )
+
+    user_data = db_model_to_dict(instance=db_user)
+
+    verification_token = create_email_verification_token(email=email)
+
+    user = UserEmailVerificationProducerMessage(
+        **user_data,
+        verification_token=verification_token
+    )
+
+    await send_user_email_verification_message(user_data=user)
+
+
+@email_verification_router.post("/confirm/{verification}/", status_code=status.HTTP_204_NO_CONTENT)
+async def confirm_email_verification(verification: str, db: AsyncSession = Depends(get_db)):
+    pyload =  decode_email_verification_token(token=verification)
+    email = pyload.get('email', None)
+
+    db_user = await get_user_by_email(email=email, db=db)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.USER_NOT_FOUND_MESSAGE
+    )
+
+    expire = pyload.get('expire', None)
+    if expire and datetime.fromisoformat(expire) < datetime.now():
+      raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.EXPIRED_TOKEN_MESSAGE
+    )
+
+    await activate_user(user_id=db_user.id, db=db)
+
+    # TODO: Send email confirmation using user producer
