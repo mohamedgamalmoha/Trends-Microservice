@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app import messages
 from app.db.session import get_db
 from app.models.user import User
-from app.core.security import create_access_token
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserRetrieve
-from app.api.deps import authenticate_user, get_current_user
+from app.api.deps import authenticate_user, get_current_user, create_access_token
 
 
 auth_router = APIRouter(
