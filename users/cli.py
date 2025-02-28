@@ -17,7 +17,7 @@ createdb
     after database resets.
 
     Example:
-        $ python db_admin.py createdb
+        $ python cli.py createdb
 
 testdb
     Tests database connection using provided credentials.
@@ -26,8 +26,8 @@ testdb
     provides detailed error information if connection fails.
 
     Example:
-        $ python db_admin.py testdb --name mydb --user dbuser --password secret123
-        $ python db_admin.py testdb --name analytics --user report_user --password dbpass --host db.example.com --port 5433 --engine postgresql
+        $ python cli.py testdb --name mydb --user dbuser --password secret123
+        $ python cli.py testdb --name analytics --user report_user --password dbpass --host db.example.com --port 5433 --engine postgresql
 
 createadminuser
     Creates an administrator user with full system privileges.
@@ -36,7 +36,7 @@ createadminuser
     ensure data integrity and security standards.
 
     Example:
-        $ python db_admin.py createadminuser --username admin --email admin@example.com --password SecurePass123!
+        $ python cli.py createadminuser --username admin --email admin@example.com --password SecurePass123!
 
 Usage Notes:
 -----------
