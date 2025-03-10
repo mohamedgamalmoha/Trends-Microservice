@@ -7,14 +7,15 @@ services:
             context: ./users
             dockerfile: Dockerfile
         env_file:
-          - ./users/.env
+             ./users/.env
         volumes:
-          - ./users:/app
+            - ./users:/app
         depends_on:
-          - users-db-serv
-          - rabbitmq
+            - users-db-serv
+            - rabbitmq
         networks:
-          - internal-network
+            - global-network
+            - internal-network
 
     notification-serv:
         container_name: notification-con
@@ -35,20 +36,21 @@ services:
 
     trends-serv:
         container_name: trends-con
-        command: uvicorn main:app --host 0.0.0.0 --port 81 --reload --http httptools --loop uvloop
+        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
         restart: always
         build:
             context: ./trends
             dockerfile: Dockerfile
         env_file:
-          - ./trends/.env
+            - ./trends/.env
         volumes:
-          - ./trends:/app
+            - ./trends:/app
         depends_on:
-          - trends-db-serv
-          - rabbitmq
+            - trends-db-serv
+            - rabbitmq
         networks:
-          - internal-network
+            - global-network
+            - internal-network
 
     trends-worker-serv:
         container_name: trends-worker-con
@@ -58,14 +60,26 @@ services:
             context: ./trends
             dockerfile: Dockerfile
         env_file:
-          - ./trends/.env
+            - ./trends/.env
         volumes:
-          - ./trends:/app
+            - ./trends:/app
         networks:
-          - internal-network
+            - internal-network
         depends_on:
-          - trends-serv
-          - redis
+            - trends-serv
+            - redis
+
+    nginx:
+        image: nginx:1.27.4-alpine
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - global-network
+        depends_on:
+            - users-serv
+            - trends-serv
 
     users-db-serv:
         image: postgres:17.4-alpine
@@ -77,9 +91,9 @@ services:
             POSTGRES_DB: users_db
             POSTGRES_PORT: 5432
         volumes:
-          - users_data:/var/lib/postgresql/data
+            - users_data:/var/lib/postgresql/data
         networks:
-          - internal-network
+            - internal-network
 
     trends-db-serv:
         image: postgres:17.4-alpine
@@ -91,9 +105,9 @@ services:
             POSTGRES_DB: trends_db
             PGPORT: 5433
         volumes:
-          - trends_data:/var/lib/postgresql/data
+            - trends_data:/var/lib/postgresql/data
         networks:
-          - internal-network
+            - internal-network
 
     redis:
         container_name: redis-con
@@ -122,5 +136,7 @@ volumes:
     redis_data:
 
 networks:
+    global-network:
+        driver: bridge
     internal-network:
         driver: bridge
