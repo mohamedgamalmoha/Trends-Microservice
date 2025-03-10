@@ -14,9 +14,7 @@ services:
           - users-db-serv
           - rabbitmq
         networks:
-          - global-network
-        ports:
-          - "8080:80"
+          - internal-network
 
     notification-serv:
         container_name: notification-con
@@ -30,7 +28,7 @@ services:
         volumes:
             - ./notification:/app
         networks:
-            - global-network
+            - internal-network
         depends_on:
             - rabbitmq
             - users-serv
@@ -50,9 +48,7 @@ services:
           - trends-db-serv
           - rabbitmq
         networks:
-          - global-network
-        ports:
-          - "8081:81"
+          - internal-network
 
     trends-worker-serv:
         container_name: trends-worker-con
@@ -66,7 +62,7 @@ services:
         volumes:
           - ./trends:/app
         networks:
-          - global-network
+          - internal-network
         depends_on:
           - trends-serv
           - redis
@@ -83,7 +79,7 @@ services:
         volumes:
           - users_data:/var/lib/postgresql/data
         networks:
-          - global-network
+          - internal-network
 
     trends-db-serv:
         image: postgres:17.4-alpine
@@ -97,7 +93,7 @@ services:
         volumes:
           - trends_data:/var/lib/postgresql/data
         networks:
-          - global-network
+          - internal-network
 
     redis:
         container_name: redis-con
@@ -106,7 +102,7 @@ services:
         volumes:
             - redis_data:/var/lib/redis
         networks:
-            - global-network
+            - internal-network
 
     rabbitmq:
         container_name: rabbitmq-con
@@ -117,7 +113,7 @@ services:
         volumes:
             - rabbitmq_data:/var/lib/rabbitmq
         networks:
-            - global-network
+            - internal-network
 
 volumes:
     users_data:
@@ -126,5 +122,5 @@ volumes:
     redis_data:
 
 networks:
-    global-network:
+    internal-network:
         driver: bridge
