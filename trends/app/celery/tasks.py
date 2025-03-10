@@ -5,47 +5,57 @@ from typing import List, Dict, Any
 from celery import Task, shared_task
 from pytrends.request import TrendReq
 
+from app.db.session import get_db
 from app.models.task import TaskStatus
 from app.repositories.task import update_task, increment_retry_count_task
 from app.schemas.task import TaskUpdate
 from app.schemas.query import PropertyEnum
+from app.celery.async_handler import AsyncHandler
 
 
 class TrendsSearchTask(Task):
 
-    async def on_success(self, retval, task_id, args, kwargs):
+    @AsyncHandler.with_async_generator(get_db)
+    async def on_success(self, db, retval, task_id, args, kwargs):
         await update_task(
             task_id=task_id,
             task_update=TaskUpdate(
                 status=TaskStatus.COMPLETED,
                 result_data=retval,
                 updated_at=datetime.now()
-            )
+            ),
+            db=db
         )
 
-    async def after_return(self, status, retval, task_id, args, kwargs, einfo):
+    @AsyncHandler.with_async_generator(get_db)
+    async def after_return(self, db, status, retval, task_id, args, kwargs, einfo):
         await update_task(
             task_id=task_id,
             task_update=TaskUpdate(
                 updated_at=datetime.now()
-            )
+            ),
+            db=db
         )
 
-    async def on_retry(self, exc, task_id, args, kwargs, einfo):
+    @AsyncHandler.with_async_generator(get_db)
+    async def on_retry(self, db, exc, task_id, args, kwargs, einfo):
         await update_task(
             task_id=task_id,
             task_update=TaskUpdate(
                 status=TaskStatus.RETRYING,
                 error_message=str(exc),
                 updated_at=datetime.now()
-            )
+            ),
+            db=db
         )
 
         await increment_retry_count_task(
-            task_id=task_id
+            task_id=task_id,
+            db=db
         )
 
-    async def on_failure(self, exc, task_id, args, kwargs, einfo):
+    @AsyncHandler.with_async_generator(get_db)
+    async def on_failure(self, db, exc, task_id, args, kwargs, einfo):
         await update_task(
             task_id=task_id,
             task_update=TaskUpdate(
@@ -57,13 +67,15 @@ class TrendsSearchTask(Task):
                     'traceback': traceback.format_exc()
                 },
                 updated_at=datetime.now()
-            )
+            ),
+            db=db
         )
 
 
 @shared_task(
     base=TrendsSearchTask,
-    max_retries=5
+    max_retries=5,
+    default_retry_delay=1
 )
 def trends_search_task(
         q: str | List[str],
