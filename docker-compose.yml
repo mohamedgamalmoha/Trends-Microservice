@@ -18,19 +18,6 @@ services:
         ports:
           - "8080:80"
 
-    users-db-serv:
-        image: postgres:latest
-        container_name: users-db-con
-        restart: unless-stopped
-        environment:
-            POSTGRES_USER: users_db_user
-            POSTGRES_PASSWORD: 123456
-            POSTGRES_DB: users_db
-        volumes:
-          - postgres_data:/var/lib/postgresql/data
-        networks:
-          - global-network
-
     notification-serv:
         container_name: notification-con
         command: python main.py
@@ -48,6 +35,79 @@ services:
             - rabbitmq
             - users-serv
 
+    trends-serv:
+        container_name: trends-con
+        command: uvicorn main:app --host 0.0.0.0 --port 81 --reload --http httptools --loop uvloop
+        restart: always
+        build:
+            context: ./trends
+            dockerfile: Dockerfile
+        env_file:
+          - ./trends/.env
+        volumes:
+          - ./trends:/app
+        depends_on:
+          - trends-db-serv
+          - rabbitmq
+        networks:
+          - global-network
+        ports:
+          - "8081:81"
+
+    trends-worker-serv:
+        container_name: trends-worker-con
+        command: celery -A worker.celery worker --loglevel=info
+        restart: always
+        build:
+            context: ./trends
+            dockerfile: Dockerfile
+        env_file:
+          - ./trends/.env
+        volumes:
+          - ./trends:/app
+        networks:
+          - global-network
+        depends_on:
+          - trends-serv
+          - redis
+
+    users-db-serv:
+        image: postgres:latest
+        container_name: users-db-con
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: users_db_user
+            POSTGRES_PASSWORD: 123456
+            POSTGRES_DB: users_db
+            POSTGRES_PORT: 5432
+        volumes:
+          - users_data:/var/lib/postgresql/data
+        networks:
+          - global-network
+
+    trends-db-serv:
+        image: postgres:latest
+        container_name: trends-db-con
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: trends_db_user
+            POSTGRES_PASSWORD: 123456
+            POSTGRES_DB: trends_db
+            PGPORT: 5433
+        volumes:
+          - trends_data:/var/lib/postgresql/data
+        networks:
+          - global-network
+
+    redis:
+        container_name: redis-con
+        image: redis:7.4.2-alpine
+        restart: unless-stopped
+        volumes:
+            - redis_data:/var/lib/redis
+        networks:
+            - global-network
+
     rabbitmq:
         container_name: rabbitmq-con
         image: rabbitmq:4.0.6-alpine
@@ -60,8 +120,10 @@ services:
             - global-network
 
 volumes:
-    postgres_data:
+    users_data:
+    trends_data:
     rabbitmq_data:
+    redis_data:
 
 networks:
     global-network:
