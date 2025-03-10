@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URL: str= os.environ.get('SQLALCHEMY_DATABASE_URL')
     CELERY_BROKER_URL: str = os.environ.get('SQLALCHEMY_DATABASE_URL')
     CELERY_RESULT_BACKEND: str = os.environ.get('CELERY_RESULT_BACKEND')
+    USER_AUTH_URL: str = os.environ.get('USER_AUTH_URL')
 
 
 settings = Settings()
