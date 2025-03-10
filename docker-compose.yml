@@ -72,7 +72,7 @@ services:
           - redis
 
     users-db-serv:
-        image: postgres:latest
+        image: postgres:17.4-alpine
         container_name: users-db-con
         restart: unless-stopped
         environment:
@@ -86,7 +86,7 @@ services:
           - global-network
 
     trends-db-serv:
-        image: postgres:latest
+        image: postgres:17.4-alpine
         container_name: trends-db-con
         restart: unless-stopped
         environment:
