@@ -8,7 +8,7 @@ from app import messages
 from app.db.session import get_db
 from app.repositories.task import create_task, get_user_task_by_id, get_user_tasks
 from app.schemas.task import TaskCreate, TaskRetrieve
-from app.tasks import trends_search_task
+from app.celery.tasks import trends_search_task
 
 
 task_router = APIRouter(
