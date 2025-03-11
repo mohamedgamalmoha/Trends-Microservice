@@ -46,7 +46,9 @@ async def get_user_tasks(user_id: int, db: AsyncSession = Depends(get_db)) -> Se
     return result.scalars().all()
 
 
-async def update_task(task_id: str, task_update: TaskUpdate, db: AsyncSession = Depends(get_db)) -> Task | None:
+async def update_task(task_id: str, task_update: TaskUpdate, increment: int = None, db: AsyncSession = Depends(get_db)) \
+        -> Task | None:
+
     db_task = await get_task_by_id(task_id=task_id, db=db)
 
     if not db_task:
@@ -56,19 +58,8 @@ async def update_task(task_id: str, task_update: TaskUpdate, db: AsyncSession = 
         if new_field_value:
             setattr(db_task, field_name, new_field_value)
 
-    await db.commit()
-    await db.refresh(db_task)
-
-    return db_task
-
-
-async def increment_retry_count_task(task_id: str, increment: int = 1, db: AsyncSession = Depends(get_db)) -> Task | None:
-    db_task = await get_task_by_id(task_id=task_id, db=db)
-
-    if not db_task:
-        return None
-
-    db_task.retry_count += increment
+    if increment:
+        db_task.retry_count += increment
 
     await db.commit()
     await db.refresh(db_task)
