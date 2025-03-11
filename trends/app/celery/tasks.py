@@ -7,7 +7,7 @@ from pytrends.request import TrendReq
 
 from app.db.session import get_db
 from app.models.task import TaskStatus
-from app.repositories.task import update_task, increment_retry_count_task
+from app.repositories.task import update_task
 from app.schemas.task import TaskUpdate
 from app.schemas.query import PropertyEnum
 from app.celery.async_handler import AsyncHandler
@@ -46,11 +46,7 @@ class TrendsSearchTask(Task):
                 error_message=str(exc),
                 updated_at=datetime.now()
             ),
-            db=db
-        )
-
-        await increment_retry_count_task(
-            task_id=task_id,
+            increment=1,
             db=db
         )
 
