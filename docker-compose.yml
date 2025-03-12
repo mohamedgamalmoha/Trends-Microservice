@@ -69,6 +69,23 @@ services:
             - trends-serv
             - redis
 
+    trends-flower-serv:
+        container_name: trends-flower-con
+        command: celery -A worker.celery flower --port=80 --url_prefix=flower
+        restart: always
+        build:
+            context: ./trends
+            dockerfile: Dockerfile
+        env_file:
+            - ./trends/.env
+        volumes:
+            - ./trends:/app
+        networks:
+            - global-network
+            - internal-network
+        depends_on:
+            - redis
+
     nginx:
         image: nginx:1.27.4-alpine
         ports:
@@ -80,6 +97,7 @@ services:
         depends_on:
             - users-serv
             - trends-serv
+            - trends-flower-serv
 
     users-db-serv:
         image: postgres:17.4-alpine
