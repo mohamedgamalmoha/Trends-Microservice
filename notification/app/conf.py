@@ -4,6 +4,7 @@ from typing import Optional
 
 import dotenv
 import aio_pika
+import pydantic
 from pydantic_settings import BaseSettings
 
 
@@ -13,7 +14,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Settings(BaseSettings):
+    # General
     RABBITMQ_URL: str = os.environ.get('RABBITMQ_URL')
+
+    # Email Credentials Envs
+    MAIL_USERNAME: pydantic.EmailStr = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD: str = os.environ.get('MAIL_PASSWORD')
+    MAIL_NAME: str = os.environ.get('MAIL_NAME')
+    MAIL_PORT: int = os.environ.get('MAIL_PORT')
+    MAIL_SERVER: str = os.environ.get('MAIL_SERVER')
 
 
 class RabbitMQQueueSettings(BaseSettings):
