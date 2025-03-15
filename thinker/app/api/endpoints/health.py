@@ -6,7 +6,7 @@ from app.schemas.health import Health, HealthStatusEnum
 
 
 health_router = APIRouter(
-    prefix='/helath',
+    prefix='/health',
     tags = ['health']
 )
 

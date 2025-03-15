@@ -10,4 +10,4 @@ app = FastAPI(
     openapi_url='/api/tasks/openapi.json'
 )
 
-app.include_router(task.task_router, prefix='/api')
+app.include_router(task.task_router, prefix='/api/tasks')

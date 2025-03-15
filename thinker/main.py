@@ -10,5 +10,5 @@ app = FastAPI(
     openapi_url='/api/think/openapi.json'
 )
 
-app.include_router(health_router, prefix='/api')
-app.include_router(question_router, prefix='/api')
+app.include_router(health_router, prefix='/api/think')
+app.include_router(question_router, prefix='/api/think')
