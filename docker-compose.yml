@@ -34,6 +34,22 @@ services:
             - rabbitmq
             - users-serv
 
+    thinker-serv:
+        container_name: thinker-con
+        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
+        restart: always
+        build:
+            context: ./thinker
+            dockerfile: Dockerfile
+        env_file:
+            - ./thinker/.env
+        volumes:
+            - ./thinker:/app
+#        depends_on:
+#            - ollama
+        networks:
+            - global-network
+
     trends-serv:
         container_name: trends-con
         command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
