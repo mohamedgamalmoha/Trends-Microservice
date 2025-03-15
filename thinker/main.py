@@ -5,8 +5,10 @@ from fastapi import FastAPI
 
 
 app = FastAPI(
-    docs_url='/'
+    docs_url='/api/think/docs',
+    redoc_url='/api/think/redoc',
+    openapi_url='/api/think/openapi.json'
 )
 
-app.include_router(health_router)
-app.include_router(question_router) 
+app.include_router(health_router, prefix='/api')
+app.include_router(question_router, prefix='/api')
