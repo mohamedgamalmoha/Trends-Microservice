@@ -38,3 +38,21 @@ async def get_current_admin_user(current_user = Depends(get_current_user)) -> Us
         )
 
     return current_user
+
+
+async def get_user_by_id(user_id: int, token: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> User:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+                url=settings.USER_INFO_URL.format(user_id=str(user_id)),
+                headers={'Authorization': f'{token.scheme} {token.credentials}'}
+        ) as response:
+
+            if response.status != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=messages.USER_NOT_FOUND_MESSAGE
+                )
+
+            return User(
+                ** await response.json()
+            )
