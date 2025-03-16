@@ -2,9 +2,11 @@ import traceback
 from datetime import datetime
 from typing import List, Dict, Any
 
-from celery import Task, shared_task
+import httpx
+from celery import Task, shared_task, chain
 from pytrends.request import TrendReq
 
+from app.core.conf import settings
 from app.db.session import get_db
 from app.models.task import TaskStatus
 from app.repositories.task import update_task
@@ -132,3 +134,35 @@ def trends_search_task(
         'related_topics': pytrends.related_topics()
     }
     return results
+
+
+@shared_task(
+    max_retries=5,
+    default_retry_delay=1
+)
+async def think_task(search_results: Dict[str, Any]) -> str:
+    async with httpx.AsyncClient(timeout=settings.TIMEOUT) as client:
+        response = await client.post(settings.THINK_API_URL, json=search_results)
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to generate think content: {response.text}")
+
+        result = response.json()
+        return result
+
+
+def trends_think_workflow(
+        q: str | List[str],
+        geo: str | None = None,
+        time: str | None = None,
+        cat: int | None = None,
+        gprop: PropertyEnum | None = None,
+        tz: int | None = None
+    ) -> chain:
+
+    workflow = chain(
+        trends_search_task.s(q, geo, time, cat, gprop, tz),
+        think_task.s()
+    )
+
+    return workflow.apply_async()
