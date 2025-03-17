@@ -2,7 +2,8 @@ from celery import uuid
 from fastapi import APIRouter, HTTPException
 
 from app.core.conf import settings
-from app.schemas.task import TaskStatus, TaskCreate, TaskRetrieve, ThinkResponse
+from app.models.task import TaskStatus
+from app.schemas.task import TaskCreate, TaskRetrieve, ThinkResponse
 from app.celery.tasks import think_task
 
 

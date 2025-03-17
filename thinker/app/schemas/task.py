@@ -1,17 +1,10 @@
-import enum
 from typing import Optional
 from datetime import datetime
 
 import pydantic
 
 from app.core.conf import settings
-
-
-class TaskStatus(enum.Enum):
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from app.models.task import TaskStatus
 
 
 class TaskCreate(pydantic.BaseModel):
