@@ -104,7 +104,7 @@ def split_think_content(text: str) -> Tuple[str, str]:
             - The second element is the remaining content outside the <think> tags.
     """
     # Regex pattern to match the content inside <think> and the rest of the string
-    pattern = r'(<think>.*?</think>)|([^<]*)'
+    pattern = r'<think>(.*?)</think>|([^<]*)'
 
     # Find all matches
     matches = re.findall(pattern, text, flags=re.DOTALL)
