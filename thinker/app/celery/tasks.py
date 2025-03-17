@@ -36,8 +36,8 @@ async def think_task(
         "stream": False
     }
 
-    async with httpx.AsyncClient(timeout=settings.TIMEOUT) as client:
-        response = await client.post(settings.THINK_API_URL, json=ollama_request)
+    async with httpx.AsyncClient(timeout=settings.OLLAMA_REQUEST_TIMEOUT) as client:
+        response = await client.post(f"{settings.OLLAMA_API_URL}/generate", json=ollama_request)
 
         if response.status_code != 200:
             raise Exception(f"Failed to generate think content: {response.text}")
@@ -48,5 +48,5 @@ async def think_task(
 
         return {
             "answer": remaining_content,
-            "think": think_content,
+            "thinking": think_content
         }
