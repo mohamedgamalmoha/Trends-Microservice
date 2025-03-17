@@ -1,0 +1,52 @@
+from typing import Dict, Optional, Any
+
+import httpx
+
+from app.core.conf import settings
+from app.utils import split_think_content
+
+
+async def think_task(
+        question: str,
+        context: Optional[str] = None,
+        temperature: Optional[float] = 0.7,
+        max_tokens: Optional[int] = 250,
+    ) -> Dict[str, Any]:
+
+    if context:
+        prompt = f"""
+        Context: {context}
+
+        Question: {question}
+
+        Please provide a concise and accurate answer based on the context provided.
+        """
+    else:
+        prompt = f"""
+        Question: {question}
+
+        Please provide a concise and accurate answer based on your knowledge.
+        """
+
+    ollama_request = {
+        "model": settings.OLLAMA_MODEL_NAME,
+        "prompt": prompt,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": False
+    }
+
+    async with httpx.AsyncClient(timeout=settings.TIMEOUT) as client:
+        response = await client.post(settings.THINK_API_URL, json=ollama_request)
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to generate think content: {response.text}")
+
+        result = response.json()
+        text = result.get("response", "").strip()
+        think_content, remaining_content = split_think_content(text)
+
+        return {
+            "answer": remaining_content,
+            "think": think_content,
+        }
