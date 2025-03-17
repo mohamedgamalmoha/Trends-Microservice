@@ -14,8 +14,7 @@ from app.api.deps import get_current_user
 
 
 task_router = APIRouter(
-    # prefix='/',
-    # tags = ['tasks']
+    tags = ['search']
 )
 
 
