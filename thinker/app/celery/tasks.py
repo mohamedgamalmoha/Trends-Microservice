@@ -5,13 +5,17 @@ from celery import shared_task
 
 from app.core.conf import settings
 from app.utils import split_think_content
+from app.celery.async_handler import AsyncHandler
 
 
 @shared_task(
+    bind=True,
     max_retries=5,
     default_retry_delay=1
 )
+@AsyncHandler.sync_to_async
 async def think_task(
+        self,
         question: str,
         context: Optional[str] = None,
         temperature: Optional[float] = 0.7,
