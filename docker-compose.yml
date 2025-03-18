@@ -47,10 +47,28 @@ services:
             - ./thinker:/app
         depends_on:
             - thinker-db-serv
-#            - ollama
+            - ollama
         networks:
             - global-network
-
+            - internal-network
+    
+    thinker-worker-serv:
+        container_name: thinker-worker-con
+        command: celery -A worker.celery worker --loglevel=info
+        restart: always
+        build:
+            context: ./thinker
+            dockerfile: Dockerfile
+        env_file:
+            - ./thinker/.env
+        volumes:
+            - ./thinker:/app
+        networks:
+            - internal-network
+        depends_on:
+            - thinker-serv
+            - redis
+    
     trends-serv:
         container_name: trends-con
         command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
@@ -174,13 +192,31 @@ services:
             - rabbitmq_data:/var/lib/rabbitmq
         networks:
             - internal-network
+   
+    ollama:
+      image: ollama/ollama:0.6.1
+      container_name: ollama-con
+      entrypoint: ["/bin/sh", "-c"]
+      command: |
+          "chmod +x /scripts/download_ollama_model.sh && /bin/ollama serve & sleep 5 && /scripts/download_ollama_model.sh && tail -f /dev/null"
+      restart: always
+      tty: true
+      environment:
+          - OLLAMA_KEEP_ALIVE=24h
+          - OLLAMA_HOST=0.0.0.0
+      networks:
+          - internal-network
+      volumes:
+          - ollama_data:/root/.ollama
+          - ./scripts/download_ollama_model.sh:/scripts/download_ollama_model.sh
 
 volumes:
     users_data:
     trends_data:
     thinker_data:
-    rabbitmq_data:
     redis_data:
+    rabbitmq_data:
+    ollama_data:
 
 networks:
     global-network:
