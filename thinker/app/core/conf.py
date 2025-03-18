@@ -17,5 +17,8 @@ class Settings(BaseSettings):
     OLLAMA_MODEL_NAME: str = os.environ.get('OLLAMA_MODEL_NAME')
     OLLAMA_REQUEST_TIMEOUT: int = os.environ.get('OLLAMA_REQUEST_TIMEOUT')
 
+    CELERY_BROKER_URL: str = os.environ.get('CELERY_BROKER_URL')
+    CELERY_RESULT_BACKEND: str = os.environ.get('CELERY_RESULT_BACKEND')
+
 
 settings = Settings()
