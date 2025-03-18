@@ -37,7 +37,7 @@ async def create_task_route(
         db=db
     )
     
-    think_task.apply_sync(
+    think_task.apply_async(
         kwargs={
             "question": task.question,
             "context": task.context,
