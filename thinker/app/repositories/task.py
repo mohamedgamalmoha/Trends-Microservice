@@ -44,6 +44,13 @@ async def get_user_tasks(user_id: int, db: AsyncSession = Depends(get_db)) -> Se
     return result.scalars().all()
 
 
+async def get_all_tasks(db: AsyncSession = Depends(get_db)) -> Sequence[Task]:
+    result = await db.execute(
+        select(Task)
+    )
+    return result.scalars().all()
+
+
 async def update_task(task_id: str, task_update: TaskUpdate, increment: int = None, db: AsyncSession = Depends(get_db)) \
         -> Task | None:
 
