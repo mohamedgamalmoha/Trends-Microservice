@@ -37,6 +37,14 @@ async def get_user_task_by_id(user_id: int, task_id: str, db: AsyncSession = Dep
     return result.scalar_one_or_none()
 
 
+async def get_user_tasks_by_search_task_id(user_id: int, search_task_id: str, db: AsyncSession = Depends(get_db)) \
+        -> Sequence[Task] | None:
+    result = await db.execute(
+        select(Task).filter_by(user_id=user_id, search_task_id=search_task_id)
+    )
+    return result.scalars().all()
+
+
 async def get_user_tasks(user_id: int, db: AsyncSession = Depends(get_db)) -> Sequence[Task]:
     result = await db.execute(
         select(Task).filter_by(user_id=user_id)
