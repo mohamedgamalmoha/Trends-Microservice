@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Depends, status
 
 from app import messages
 from app.db.session import get_db
-from app.repositories.task import create_task, get_user_task_by_id, get_user_tasks, get_all_tasks, delete_task
+from app.repositories.task import (create_task, get_user_task_by_id, get_user_tasks, get_all_tasks,
+                                   get_user_tasks_by_search_task_id, delete_task)
 from app.schemas.user import User
 from app.schemas.task import TaskCreate, TaskRetrieve
 from app.celery.tasks import think_task
@@ -98,6 +99,35 @@ async def get_user_tasks_route(
         user_id=user_id,
         db=db
     )
+
+    return db_tasks
+
+
+@task_router.get("{user_id}/tasks/{search_task_id}/", response_model=List[TaskRetrieve])
+async def get_tasks_by_search_task_id_route(
+        user_id: int,
+        search_task_id: str,
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ):
+
+    if not current_user.is_admin and user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=messages.USER_FORBIDDEN_MESSAGE
+        )
+
+    db_tasks = await get_user_tasks_by_search_task_id(
+        user_id=user_id,
+        search_task_id=search_task_id,
+        db=db
+    )
+
+    if db_tasks is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.SEARCH_TASKS_NOT_FOUND_MESSAGE
+        )
 
     return db_tasks
 
