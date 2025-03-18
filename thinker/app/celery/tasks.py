@@ -1,11 +1,16 @@
 from typing import Dict, Optional, Any
 
 import httpx
+from celery import shared_task
 
 from app.core.conf import settings
 from app.utils import split_think_content
 
 
+@shared_task(
+    max_retries=5,
+    default_retry_delay=1
+)
 async def think_task(
         question: str,
         context: Optional[str] = None,
