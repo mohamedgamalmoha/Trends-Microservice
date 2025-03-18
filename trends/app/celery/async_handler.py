@@ -31,7 +31,7 @@ class AsyncHandler:
             loop.close()
 
     @classmethod
-    def async_event(cls, event_handler: Callable[..., Coroutine]):
+    def sync_to_async(cls, event_handler: Callable[..., Coroutine]):
         """
         Decorator to run an async event handler in a sync context.
 
