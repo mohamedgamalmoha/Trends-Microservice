@@ -112,7 +112,8 @@ async def get_tasks_route(
 
     return db_tasks
 
-@task_router.delete("/{user_id}/task/{task_id}/", response_model=None)
+
+@task_router.delete("/{user_id}/task/{task_id}/", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
 async def delete_task_route(
         user_id: int,
         task_id: str,
