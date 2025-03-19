@@ -1,8 +1,8 @@
+from shared_utils.utils import safe_call
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.db.base import Base
 from app.core.conf import settings
-from app.utils import safe_call
 
 
 engine = create_async_engine(
