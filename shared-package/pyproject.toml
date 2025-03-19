@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+dependencies = [
+    "setuptools>=42.0",
+    "wheel",
+]
+
+[project]
+name = "shared_utils"
+version = "0.0.1"
+authors = [
+  { name="M.Gamal", email="moha.gamal@nu.edu.eg" },
+]
+description = "Shared utilities for trends microservices"
+readme = "README.md"
+requires-python = ">=3.12.3"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
