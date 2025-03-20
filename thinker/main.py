@@ -1,8 +1,8 @@
-from app.core.lifespan import lifespan
 from app.api.endpoints.task import task_router
 from app.api.endpoints.health import health_router
 
 from fastapi import FastAPI
+from shared_utils.core.lifespan import lifespan
 
 
 app = FastAPI(

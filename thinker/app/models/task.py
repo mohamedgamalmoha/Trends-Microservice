@@ -1,9 +1,8 @@
 from datetime import datetime
 
 from sqlalchemy import Column, Float, Integer, String, DateTime, JSON, Enum
+from shared_utils.db.base import Base
 from shared_utils.schemas.status import TaskStatus
-
-from app.db.base import Base
 
 
 class Task(Base):
