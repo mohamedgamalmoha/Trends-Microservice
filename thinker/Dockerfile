@@ -12,5 +12,5 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . /app
 
-CMD ["alembic", "-c", "app/alembic.ini", "revision", "--autogenerate"]
-CMD ["alembic", "-c", "app/alembic.ini", "upgrade", "head"]
+RUN alembic -c app/alembic.ini revision --autogenerate
+RUN alembic -c app/alembic.ini upgrade head

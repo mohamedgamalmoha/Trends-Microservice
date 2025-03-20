@@ -5,10 +5,12 @@ ENV PYTHONBUFFERED = 1
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y git
+
 COPY ./requirements.txt /app
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . /app
 
-CMD ["alembic", "-c", "app/alembic.ini", "revision", "--autogenerate"]
-CMD ["alembic", "-c", "app/alembic.ini", "upgrade", "head"]
+RUN alembic -c app/alembic.ini revision --autogenerate
+RUN alembic -c app/alembic.ini upgrade head
