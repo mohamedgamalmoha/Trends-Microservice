@@ -1,4 +1,4 @@
-from app import messages
+from shared_utils import messages
 
 
 class TokenError(Exception):

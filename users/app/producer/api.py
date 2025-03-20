@@ -1,4 +1,5 @@
-from app.utils import safe_call
+from shared_utils.utils import safe_call
+
 from app.producer.conf import settings, USER_RABBITMQ_EXCHANGE, USER_RABBITMQ_QUEUES
 from app.schemas.producer import (UserCreationProducerMessage, UserEmailVerificationProducerMessage,
                                   UserResetPasswordProducerMessage)

@@ -2,13 +2,13 @@ from functools import partial
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
+from shared_utils import messages
+from shared_utils.db.session import get_db
 
-from app import messages
-from app.db.session import get_db
-from app.models.user import User
-from app.repositories.user import get_user_by_email
 from app.core.conf import settings
 from app.core.security import oauth2_scheme, create_token, decode_token, verify_password
+from app.models.user import User
+from app.repositories.user import get_user_by_email
 from app.exceptions import InvalidTokenError, TokenExpiredError
 
 

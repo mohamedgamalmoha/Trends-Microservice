@@ -2,9 +2,9 @@ from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status, APIRouter
+from shared_utils import messages
+from shared_utils.db.session import get_db
 
-from app import messages
-from app.db.session import get_db
 from app.repositories.user import get_user_by_email, reset_user_password
 from app.schemas.password import UserPasswordReset, UsePasswordResetConfirmation
 from app.schemas.producer import UserResetPasswordProducerMessage, UserResetPasswordConfirmationProducerMessage

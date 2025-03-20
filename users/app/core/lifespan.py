@@ -1,9 +1,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from shared_utils.db.session import init_db, close_db
 
 from app.producer.api import init_producer
-from app.db.session import init_db, close_db
 
 
 @asynccontextmanager

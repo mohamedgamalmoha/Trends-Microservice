@@ -56,9 +56,9 @@ import click
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.exc import SQLAlchemyError
+from shared_utils.db.base import Base
+from shared_utils.db.session import engine
 
-from app.db.base import Base
-from app.db.session import engine
 from app.schemas.user import _AdminUserCreate
 from app.repositories.user import _create_admin_user
 

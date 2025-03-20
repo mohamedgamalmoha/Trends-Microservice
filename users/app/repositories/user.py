@@ -3,8 +3,8 @@ from typing import Type, Sequence
 from fastapi import Depends
 from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from shared_utils.db.session import get_db
 
-from app.db.session import get_db
 from app.models.user import User
 from app.core.security import hash_password
 from app.schemas.user import UserCreate, UserUpdate, _AdminUserCreate
