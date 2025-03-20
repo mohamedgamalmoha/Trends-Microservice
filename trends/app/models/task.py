@@ -1,16 +1,8 @@
-import enum
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum
-
-from app.db.base import Base
-
-
-class TaskStatus(enum.Enum):
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from shared_utils.db.base import Base
+from shared_utils.schemas.status import TaskStatus
 
 
 class Task(Base):

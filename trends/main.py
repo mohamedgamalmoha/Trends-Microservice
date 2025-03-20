@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.core.lifespan import lifespan
+from shared_utils.core.lifespan import lifespan
+
 from app.api.endpoints import task
 
 

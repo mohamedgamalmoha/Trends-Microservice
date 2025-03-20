@@ -5,14 +5,14 @@ from typing import List, Dict, Any
 import httpx
 from celery import Task, shared_task, chain
 from pytrends.request import TrendReq
+from shared_utils.db.session import get_db
+from shared_utils.schemas.status import TaskStatus
+from shared_utils.async_handler import AsyncHandler
 
 from app.core.conf import settings
-from app.db.session import get_db
-from app.models.task import TaskStatus
 from app.repositories.task import update_task
 from app.schemas.task import TaskUpdate
 from app.schemas.query import PropertyEnum
-from app.celery.async_handler import AsyncHandler
 
 
 class TrendsSearchTask(Task):
@@ -44,7 +44,7 @@ class TrendsSearchTask(Task):
         await update_task(
             task_id=task_id,
             task_update=TaskUpdate(
-                status=TaskStatus.RETRYING,
+                status=TaskStatus.IN_PROGRESS,
                 error_message=str(exc),
                 updated_at=datetime.now()
             ),

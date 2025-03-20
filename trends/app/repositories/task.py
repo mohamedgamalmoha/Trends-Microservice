@@ -3,8 +3,8 @@ from typing import Sequence
 from fastapi import Depends
 from sqlalchemy.sql import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from shared_utils.db.session import get_db
 
-from app.db.session import get_db
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskRetrieve, TaskUpdate
 
