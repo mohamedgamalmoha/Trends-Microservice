@@ -2,10 +2,10 @@ from typing import Dict, Optional, Any
 
 import httpx
 from celery import shared_task
+from shared_utils.async_handler import AsyncHandler
 
 from app.core.conf import settings
 from app.utils import split_think_content
-from app.celery.async_handler import AsyncHandler
 
 
 @shared_task(

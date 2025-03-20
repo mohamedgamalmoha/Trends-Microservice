@@ -3,15 +3,15 @@ from typing import List
 from celery import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
+from shared_utils import messages
+from shared_utils.schemas.user import User
+from shared_utils.api.deps.user import get_current_user, get_current_admin_user
 
-from app import messages
 from app.db.session import get_db
 from app.repositories.task import (create_task, get_user_task_by_id, get_user_tasks, get_all_tasks,
                                    get_user_tasks_by_search_task_id, delete_task)
-from app.schemas.user import User
 from app.schemas.task import TaskCreate, TaskRetrieve
 from app.celery.tasks import think_task
-from app.api.deps import get_current_user, get_current_admin_user
 
 
 task_router = APIRouter(

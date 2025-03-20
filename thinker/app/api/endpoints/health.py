@@ -1,7 +1,7 @@
 import httpx
 from fastapi import APIRouter, HTTPException, status
+from shared_utils import messages
 
-from app import messages
 from app.core.conf import settings
 from app.schemas.health import Health
 

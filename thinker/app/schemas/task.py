@@ -2,8 +2,7 @@ from typing import Optional
 from datetime import datetime
 
 import pydantic
-
-from app.models.task import TaskStatus
+from shared_utils.schemas.status import TaskStatus
 
 
 class TaskCreate(pydantic.BaseModel):
