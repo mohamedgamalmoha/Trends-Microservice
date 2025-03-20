@@ -29,7 +29,7 @@ pydantic_core==2.27.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 redis==5.2.1
-shared_utils @ git+https://github.com/mohamedgamalmoha/Trends-Microservice-Shared-Package.git@f6edebb6218440845b76cd777cb2e09a2ac27e2c
+shared_utils @ git+https://github.com/mohamedgamalmoha/Trends-Microservice-Shared-Package.git@v0.2.1
 six==1.17.0
 sniffio==1.3.1
 SQLAlchemy==2.0.39
