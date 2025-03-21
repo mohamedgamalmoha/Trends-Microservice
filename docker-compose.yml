@@ -1,7 +1,6 @@
 services:
     users-serv:
         container_name: users-con
-        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
         restart: always
         build:
             context: ./users
@@ -10,6 +9,7 @@ services:
              ./users/.env
         volumes:
             - ./users:/app
+            - ./scripts/startup.sh:/scripts/startup.sh
         depends_on:
             - users-db-serv
             - rabbitmq
@@ -36,7 +36,6 @@ services:
 
     thinker-serv:
         container_name: thinker-con
-        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
         restart: always
         build:
             context: ./thinker
@@ -45,6 +44,7 @@ services:
             - ./thinker/.env
         volumes:
             - ./thinker:/app
+            - ./scripts/startup.sh:/scripts/startup.sh
         depends_on:
             - thinker-db-serv
             - ollama
@@ -71,7 +71,6 @@ services:
     
     trends-serv:
         container_name: trends-con
-        command: uvicorn main:app --host 0.0.0.0 --port 80 --reload --http httptools --loop uvloop
         restart: always
         build:
             context: ./trends
@@ -80,6 +79,7 @@ services:
             - ./trends/.env
         volumes:
             - ./trends:/app
+            - ./scripts/startup.sh:/scripts/startup.sh
         depends_on:
             - trends-db-serv
             - rabbitmq
