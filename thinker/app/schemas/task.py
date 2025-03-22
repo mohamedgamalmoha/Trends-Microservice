@@ -97,3 +97,14 @@ class TaskUpdate(pydantic.BaseModel):
 
     class Config:
         from_attributes=True
+
+
+class ThinkTaskUpdate(pydantic.BaseModel):
+    status: Optional[TaskStatus] = None
+    result_data: Optional[ThinkResponse] = None
+    error: Optional[ThinkError] = None
+    increment_retry_count: Optional[bool] = False
+    update_at: Optional[datetime] = pydantic.Field(default_factory=datetime.now)
+
+    class Config:
+        from_attributes=True
