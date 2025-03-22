@@ -9,9 +9,6 @@ done
 echo "Database is ready!"
 
 # Run migrations
-echo "Creating migrations..."
-alembic -c alembic.ini revision --autogenerate
-
 echo "Running migrations..."
 alembic -c alembic.ini upgrade head
 
