@@ -1,4 +1,5 @@
 import asyncio
+import aiormq
 
 from app.api import get_consumer
 
@@ -9,6 +10,8 @@ async def main():
     try:
         await consumer.start()
         await asyncio.Future()  # run forever
+    except aiormq.exceptions.AMQPConnectionError:
+        await asyncio.sleep(5)
     except KeyboardInterrupt:
         await consumer.close()
 
