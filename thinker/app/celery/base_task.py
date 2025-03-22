@@ -11,8 +11,9 @@ from app.schemas.task import ThinkResponse, ThinkError, ThinkTaskUpdate
 
 class ThinkTask(Task):
 
+    @staticmethod
     @AsyncHandler.with_async_generator(get_db)
-    async def before_start(self, db, task_id, args, kwargs):
+    async def before_start(db, task_id, args, kwargs):
         await update_task(
             task_id=task_id,
             task_update=ThinkTaskUpdate(
@@ -21,8 +22,9 @@ class ThinkTask(Task):
             db=db
         )
 
+    @staticmethod
     @AsyncHandler.with_async_generator(get_db)
-    async def on_success(self, db, retval, task_id, args, kwargs):
+    async def on_success(db, retval, task_id, args, kwargs):
         await update_task(
             task_id=task_id,
             task_update=ThinkTaskUpdate(
@@ -34,8 +36,9 @@ class ThinkTask(Task):
             db=db
         )
 
+    @staticmethod
     @AsyncHandler.with_async_generator(get_db)
-    async def on_failure(self, db, exc, task_id, args, kwargs, einfo):
+    async def on_failure(db, exc, task_id, args, kwargs, einfo):
         await update_task(
             task_id=task_id,
             task_update=ThinkTaskUpdate(
@@ -48,8 +51,9 @@ class ThinkTask(Task):
             db=db
         )
 
+    @staticmethod
     @AsyncHandler.with_async_generator(get_db)
-    async def on_retry(self, db, exc, task_id, args, kwargs, einfo):
+    async def on_retry(db, exc, task_id, args, kwargs, einfo):
         await update_task(
             task_id=task_id,
             task_update=ThinkTaskUpdate(
