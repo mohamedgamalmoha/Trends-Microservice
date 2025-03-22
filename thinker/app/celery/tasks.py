@@ -6,9 +6,12 @@ from shared_utils.async_handler import AsyncHandler
 
 from app.core.conf import settings
 from app.utils import split_think_content
+from app.celery.base_task import ThinkTask
 
 
 @shared_task(
+    base=ThinkTask,
+    throws=(Exception, ),
     bind=True,
     max_retries=5,
     default_retry_delay=1
