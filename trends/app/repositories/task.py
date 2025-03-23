@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
 
 from app.models.task import Task
-from app.schemas.task import TaskCreate, TaskRetrieve, TaskUpdate
+from app.schemas.task import TaskCreate, TaskRetrieve, TaskUpdate, TrendTaskUpdate
 
 
 async def create_task(task_id: str, task: TaskCreate, db: AsyncSession = Depends(get_db)) -> Task:
@@ -53,7 +53,7 @@ async def get_all_tasks(db: AsyncSession = Depends(get_db)) -> Sequence[Task]:
     return result.scalars().all()
 
 
-async def update_task(task_id: str, task_update: TaskUpdate, increment: int = None, db: AsyncSession = Depends(get_db)) \
+async def update_task(task_id: str, task_update: TaskUpdate | TrendTaskUpdate, db: AsyncSession = Depends(get_db)) \
         -> Task | None:
 
     db_task = await get_task_by_id(task_id=task_id, db=db)
@@ -65,8 +65,8 @@ async def update_task(task_id: str, task_update: TaskUpdate, increment: int = No
         if new_field_value:
             setattr(db_task, field_name, new_field_value)
 
-    if increment:
-        db_task.retry_count += increment
+    if isinstance(task_update, TrendTaskUpdate) and task_update.increment_retry_count:
+        db_task.retry_count += 1
 
     await db.commit()
     await db.refresh(db_task)
