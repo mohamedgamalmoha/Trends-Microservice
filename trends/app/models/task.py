@@ -19,10 +19,11 @@ class Task(Base):
 
     task_id = Column(String, index=True, primary_key=True)
     user_id = Column(Integer, index=True)
-    geo = Column(JSON)
+    q = Column(JSON)
+    geo = Column(String)
     time = Column(String, nullable=True)
     cat = Column(Integer, default=0)
-    gprop = Column(Enum(), default=PropertyEnum.WEB_SEARCH)
+    gprop = Column(Enum(PropertyEnum), default=PropertyEnum.WEB_SEARCH)
     tz = Column(Integer, default=0)
     schedule_at = Column(DateTime, default=datetime.now)
 
