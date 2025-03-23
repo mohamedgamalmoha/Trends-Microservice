@@ -6,8 +6,7 @@ from pytrends.request import TrendReq
 
 from app.core.conf import settings
 from app.repositories.task import update_task
-from app.schemas.task import TaskUpdate
-from app.schemas.query import PropertyEnum
+from app.schemas.task import PropertyEnum
 from app.celery.base_task import TrendTask
 
 
