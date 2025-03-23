@@ -166,7 +166,7 @@ class TaskUpdate(pydantic.BaseModel):
 class TrendTaskUpdate(pydantic.BaseModel):
     status: Optional[TaskStatus] = None
     result_data: Optional[List[TrendResponse]] = None
-    error: Optional[str] = None
+    error: Optional[TrendError] = None
     increment_retry_count: Optional[bool] = False
     updated_at: Optional[datetime] = pydantic.Field(default_factory=datetime.now)
 
