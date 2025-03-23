@@ -11,3 +11,7 @@ celery = Celery(
 )
 
 celery.conf.task_routes = {'thinker.*': {'queue': 'thinker_queue'}}
+celery.conf.task_default_queue = 'thinker_queue' 
+celery.conf.task_default_exchange = 'thinker_exchange'
+celery.conf.task_default_routing_key = 'thinker_routing_key'
+celery.conf.broker_connection_retry_on_startup = True
