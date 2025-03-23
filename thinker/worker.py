@@ -9,3 +9,5 @@ celery = Celery(
     backend=settings.CELERY_RESULT_BACKEND,
     include=['app.celery.tasks']
 )
+
+celery.conf.task_routes = {'thinker.*': {'queue': 'thinker_queue'}}
