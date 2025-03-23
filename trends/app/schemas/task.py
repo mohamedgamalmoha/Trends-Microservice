@@ -113,6 +113,14 @@ class TrendResponse(pydantic.BaseModel):
         from_attributes=True
 
 
+class TrendError(pydantic.BaseModel):
+    code: int
+    error: str
+
+    class Config:
+        from_attributes=True
+
+
 class TaskRetrieve(TaskCreate):
     task_id: str
     status: TaskStatus
