@@ -7,7 +7,7 @@ from shared_utils.schemas.status import TaskStatus
 from shared_utils.async_handler import AsyncHandler
 
 from app.repositories.task import update_task
-from app.schemas.task import TaskUpdate, TrendResponse, TrendError
+from app.schemas.task import TrendResponseQListItem, TrendResponse, TrendError, TrendTaskUpdate
 
 
 class TrendTask(Task):
@@ -28,11 +28,21 @@ class TrendTask(Task):
     async def on_success(db, retval, task_id, args, kwargs):
         await update_task(
             task_id=task_id,
-            task_update=TaskUpdate(
+            task_update=TrendTaskUpdate(
                 status=TaskStatus.COMPLETED,
-                result_data=TrendResponse(
-                    ** retval
-                )
+                result_data=[
+                    TrendResponse(
+                        date=retval['date'],
+                        is_partial=retval['is_partial'],
+                        q_list=[
+                            TrendResponseQListItem(
+                                query=q['query'],
+                                value=q['value']
+                            )
+                            for q in retval['q_List']
+                        ]
+                    )
+                ]
             ),
             db=db
         )
