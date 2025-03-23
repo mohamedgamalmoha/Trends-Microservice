@@ -35,7 +35,7 @@ class TaskCreate(pydantic.BaseModel):
     schedule_at: Optional[datetime] = pydantic.Field(default_factory=datetime.now)
 
     @pydantic.field_validator("time")
-    def validate_time(self, v):
+    def validate_time(cls, v):
         if v is None:
             return v
         parts = v.split()
