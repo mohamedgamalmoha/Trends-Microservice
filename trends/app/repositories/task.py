@@ -10,12 +10,10 @@ from app.schemas.task import TaskCreate, TaskRetrieve, TaskUpdate, TrendTaskUpda
 
 
 async def create_task(task_id: str, task: TaskCreate, db: AsyncSession = Depends(get_db)) -> Task:
-    request_data = task.request_data.custom_model_dump()
 
     db_task = Task(
         task_id=task_id,
-        **task.model_dump(exclude=['request_data']),
-        request_data=request_data
+        **task.model_dump(),
     )
 
     db.add(db_task)
