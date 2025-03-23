@@ -29,7 +29,7 @@ class Task(Base):
 
     status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
     result_data = Column(JSON, nullable=True)
-    error = Column(String, nullable=True)
+    error = Column(JSON, nullable=True)
     retry_count = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.now)
