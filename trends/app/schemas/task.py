@@ -124,7 +124,7 @@ class TrendError(pydantic.BaseModel):
 class TaskRetrieve(TaskCreate):
     task_id: str
     status: TaskStatus
-    result_data: Optional[TrendResponse] = None
+    result_data: Optional[List[TrendResponse]] = None
     error: Optional[str] = None
     retry_count: int = 0
     created_at: datetime
@@ -165,7 +165,7 @@ class TaskUpdate(pydantic.BaseModel):
 
 class TrendTaskUpdate(pydantic.BaseModel):
     status: Optional[TaskStatus] = None
-    result_data: Optional[TrendResponse] = None
+    result_data: Optional[List[TrendResponse]] = None
     error: Optional[str] = None
     increment_retry_count: Optional[bool] = False
     updated_at: Optional[datetime] = pydantic.Field(default_factory=datetime.now)
