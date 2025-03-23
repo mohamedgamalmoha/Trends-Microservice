@@ -13,6 +13,7 @@ from app.celery.base_task import TrendTask
 
 @shared_task(
     base=TrendTask,
+    thows=(Exception, ),
     max_retries=5,
     default_retry_delay=1
 )
@@ -23,7 +24,7 @@ def trends_search_task(
         cat: int | None = None,
         gprop: PropertyEnum | None = None,
         tz: int | None = None
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
     """
     Perform a Google Trends search using pytrends.
 
@@ -67,13 +68,20 @@ def trends_search_task(
     # Build the payload
     pytrends.build_payload(**payload_params)
 
+    # Fetch interest over time
+    interest_over_time_df = pytrends.interest_over_time()
+
     # Prepare results dictionary
-    results = {
-        'interest_over_time': pytrends.interest_over_time(),
-        'related_queries': pytrends.related_queries(),
-        'interest_by_region': pytrends.interest_by_region(),
-        'related_topics': pytrends.related_topics()
-    }
+    results = []
+    for interest in interest_over_time_df:
+        results.append({
+            "date": interest["date"],
+            "is_partial": interest["isPartial"],
+            "q_list": [
+                {"query": ky, "value": interest[ky]} for ky in interest.keys() if ky not in ["date", "isPartial"]
+            ]
+        })
+
     return results
 
 
