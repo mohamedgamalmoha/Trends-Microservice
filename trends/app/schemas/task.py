@@ -105,7 +105,7 @@ class TrendResponseQListItem(pydantic.BaseModel):
 
 
 class TrendResponse(pydantic.BaseModel):
-    date: datetime
+    date: str
     is_partial: bool
     q_list: List[TrendResponseQListItem]
 
