@@ -10,11 +10,15 @@ from app.celery.base_task import ThinkTask
 
 
 @shared_task(
+    queue='thinker_queue',
+    routing_key='thinker_routing_key',
+    exchange='thinker_exchange',
     base=ThinkTask,
     throws=(Exception, ),
+    autoretry_for=(Exception, ),
     bind=True,
     max_retries=5,
-    default_retry_delay=1
+    default_retry_delay=5
 )
 @AsyncHandler.sync_to_async
 async def think_task(
