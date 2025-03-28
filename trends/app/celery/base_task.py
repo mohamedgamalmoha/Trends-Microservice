@@ -38,7 +38,7 @@ class TrendTask(Task):
                                 query=q['query'],
                                 value=q['value']
                             )
-                            for q in ret['q_List']
+                            for q in ret['q_list']
                         ]
                     ) for ret in retval
                 ]

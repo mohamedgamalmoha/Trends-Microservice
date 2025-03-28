@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Enum
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ARRAY, Enum
 from shared_utils.db.base import Base
 from shared_utils.schemas.status import TaskStatus
 
@@ -19,7 +19,7 @@ class Task(Base):
 
     task_id = Column(String, index=True, primary_key=True)
     user_id = Column(Integer, index=True)
-    q = Column(JSON)
+    q = Column(ARRAY(String))
     geo = Column(String)
     time = Column(String, nullable=True)
     cat = Column(Integer, default=0)

@@ -3,18 +3,23 @@ from typing import List, Dict, Any
 import httpx
 from celery import shared_task, chain
 from pytrends.request import TrendReq
+from pytrends.exceptions import ResponseError
 
 from app.core.conf import settings
-from app.repositories.task import update_task
 from app.schemas.task import PropertyEnum
+from app.exceptions import TrendRequestFailed
 from app.celery.base_task import TrendTask
 
 
 @shared_task(
+    queue='trends_queue',
+    routing_key='trends_routing_key',
+    exchange='trends_exchange',
     base=TrendTask,
-    thows=(Exception, ),
+    throws=(TrendRequestFailed, ),
+    autoretry_for=(TrendRequestFailed, ),
     max_retries=5,
-    default_retry_delay=1
+    default_retry_delay=5
 )
 def trends_search_task(
         q: str | List[str],
@@ -39,49 +44,58 @@ def trends_search_task(
     Returns:
         - Dict[str, Any]: Google Trends search results
     """
-    # Initialize pytrends
-    pytrends = TrendReq(
-        hl='en-US',  # Language
-        tz=tz or -300  # Default to Eastern Time if not specified
-    )
+    try:
+        # Initialize pytrends
+        pytrends = TrendReq(
+            hl='en-US',  # Language
+            tz=tz or -300  # Default to Eastern Time if not specified
+        )
 
-    # Convert single string to list if needed
-    keywords = q if isinstance(q, list) else [q]
+        # Convert single string to list if needed
+        keywords = q if isinstance(q, list) else [q]
 
-    # Prepare the build payload parameters
-    payload_params = {
-        'kw_list': keywords,
-        'timeframe': time or 'today 5-y',  # Default to 5 years if not specified
-    }
+        # Prepare the build payload parameters
+        payload_params = {
+            'kw_list': keywords,
+            'geo': '',
+            'timeframe': 'today 5-y',  # Default to 5 years if not specified
+            'cat': 0,
+            'gprop': ''
+        }
 
-    # Add optional parameters
-    if geo:
-        payload_params['geo'] = geo
-    if cat:
-        payload_params['cat'] = cat
-    if gprop:
-        if gprop == "web":
-            gprop = ""
-        payload_params['gprop'] = gprop
+        # Add optional parameters
+        if geo:
+            payload_params['geo'] = geo
+        if time:
+            payload_params['timeframe'] = time
+        if cat:
+            payload_params['cat'] = cat
+        if gprop and gprop != 'web':  # Default is 'web', so only set if not 'web'
+            payload_params['gprop'] = gprop
 
-    # Build the payload
-    pytrends.build_payload(**payload_params)
+        # Build the payload
+        pytrends.build_payload(**payload_params)
 
-    # Fetch interest over time
-    interest_over_time_df = pytrends.interest_over_time()
+        # Fetch interest over time
+        interest_over_time_df = pytrends.interest_over_time()
 
-    # Prepare results dictionary
-    results = []
-    for interest in interest_over_time_df:
-        results.append({
-            "date": interest["date"],
-            "is_partial": interest["isPartial"],
-            "q_list": [
-                {"query": ky, "value": interest[ky]} for ky in interest.keys() if ky not in ["date", "isPartial"]
-            ]
-        })
+        # Convert DataFrame to list of dictionaries
+        interest_over_time_list = interest_over_time_df.reset_index().to_dict('records')
 
-    return results
+    except ResponseError:
+        raise TrendRequestFailed("Failed to fetch Google Trends data")
+    else:
+        # Prepare results dictionary
+        results = []
+        for interest in interest_over_time_list:
+            results.append({
+                "date": interest["date"].isoformat(),
+                "is_partial": interest["isPartial"],
+                "q_list": [
+                    {"query": ky, "value": interest[ky]} for ky in interest.keys() if ky not in ["date", "isPartial"]
+                ]
+            })
+        return results
 
 
 @shared_task(
