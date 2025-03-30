@@ -6,11 +6,10 @@ test-install-postgres:
 	sudo apt install postgresql postgresql-contrib -y 
 
 test-run-postgres:
-	sudo systemctl start postgresql
-	sudo systemctl enable postgresql
+	service postgresql start
 
 test-staus-postgres:
-	sudo systemctl status postgresql
+	service postgresql status
 
 test-setup-postgres:
 	sudo -u postgres psql -c "CREATE USER users_test_db_user WITH PASSWORD '123456';"
@@ -23,7 +22,7 @@ test-teardown-postgres:
 	sudo -u postgres psql -c "DROP USER users_test_db_user;"
 
 test-stop-postgres:
-	sudo systemctl stop postgresql
+	service postgresql stop
 
 test-pre-run: test-install-requirements test-install-postgres test-run-postgres test-staus-postgres test-setup-postgres
 
