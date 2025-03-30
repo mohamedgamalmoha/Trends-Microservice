@@ -32,3 +32,5 @@ test-run:
 	pytest -v --tb=short --disable-warnings
 
 test: test-pre-run test-run test-post-run
+
+test-rerun: test-teardown-postgres test
