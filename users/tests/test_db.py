@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_database_connection(get_db, app):
+async def test_database_connection(get_db):
     db_url = os.getenv("DATABASE_URL")
     assert db_url.startswith("postgresql+asyncpg://")
 
