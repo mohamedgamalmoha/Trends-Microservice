@@ -4,6 +4,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from testcontainers.postgres import PostgresContainer
+from testcontainers.core.waiting_utils import wait_for_logs
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
@@ -26,9 +27,14 @@ def postgres_container():
         ).with_exposed_ports(
             5555
         ).with_bind_ports(
-        5555,
-        5555
+            5555,
+            5555
         ) as postgres:
+
+        wait_for_logs(
+            postgres,
+            "database system is ready to accept connections"
+        )
 
         yield postgres
 
