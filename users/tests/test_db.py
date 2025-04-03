@@ -1,13 +1,17 @@
-import os
-
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_database_connection(get_db):
-    db_url = os.getenv("DATABASE_URL")
-    assert db_url.startswith("postgresql+asyncpg://")
-
-    # Run a simple query to verify connection
-    result = await get_db.execute("SELECT 1")
-    assert result.scalar_one() == 1
+async def test_database_connection(session_local):
+    async with session_local() as session:
+        
+        assert isinstance(session, AsyncSession)
+        
+        result = await session.execute(
+            select(1)
+        )
+        value = result.scalar_one()
+        
+        assert value == 1
