@@ -1,3 +1,4 @@
+import asyncio
 import dotenv
 import pytest
 import pytest_asyncio
@@ -14,8 +15,16 @@ dotenv.load_dotenv('.env.test')
 Base = declarative_base()
 
 
+@pytest.fixture(scope="session")
+def event_loop():
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
+
+
 @pytest.fixture(scope="module")
-def postgres_container():
+def postgres_container(event_loop):
     # Start a PostgreSQL container with Testcontainers
     postgres = PostgresContainer(
         image="postgres:17.4-alpine",
