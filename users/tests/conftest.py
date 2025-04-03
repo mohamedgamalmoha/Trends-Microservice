@@ -17,26 +17,23 @@ Base = declarative_base()
 @pytest.fixture(scope="module")
 def postgres_container():
     # Start a PostgreSQL container with Testcontainers
-    with PostgresContainer(
-            image="postgres:17.4-alpine",
-            username='users_test_db_user',
-            password='123456',
-            dbname='users_test_db',
-            port=5500,
-            driver="asyncpg"
-        ).with_exposed_ports(
-            5555
-        ).with_bind_ports(
-            5555,
-            5555
-        ) as postgres:
-
-        wait_for_logs(
-            postgres,
-            "database system is ready to accept connections"
-        )
-
-        yield postgres
+    postgres = PostgresContainer(
+        image="postgres:17.4-alpine",
+        driver="asyncpg"
+    ).with_exposed_ports(
+        5432
+    )
+    
+    postgres.start()
+    
+    wait_for_logs(
+        postgres,
+        "database system is ready to accept connections"
+    )
+    
+    yield postgres
+    
+    postgres.stop()
 
 
 @pytest_asyncio.fixture(scope='module')
