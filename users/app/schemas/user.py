@@ -32,9 +32,9 @@ class UserLogin(pydantic.BaseModel):
 
 
 class UserUpdate(pydantic.BaseModel):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    phone_number: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
 
     class Config:
         from_attributes=True
