@@ -3,7 +3,14 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from testcontainers.postgres import PostgresContainer
+from testcontainers.rabbitmq import RabbitMqContainer
 from testcontainers.core.waiting_utils import wait_for_logs
+
+
+class CustomRabbitMqContainer(RabbitMqContainer):
+
+    def get_connection_url(self):
+        return f"amqp://{self.username}:{self.password}@{self.get_container_host_ip()}:{self.get_exposed_port(self.port)}"
 
 
 async def lifespan(app):
@@ -38,14 +45,39 @@ def postgres_container():
     postgres.stop()
 
 
-@pytest.fixture(scope="function")
-def app(postgres_container):
-    from shared_utils.core.conf import settings
+@pytest.fixture(scope="session")
+def rabbitmq_container():
+    rabbitmq = CustomRabbitMqContainer(
+        image="rabbitmq:4.0.6-alpine",
+    ).with_exposed_ports(
+        5672
+    )
     
+    rabbitmq.start()
+    
+    wait_for_logs(
+        rabbitmq,
+        "Server startup complete"
+    )
+    
+    yield rabbitmq
+    
+    rabbitmq.stop()
+
+
+@pytest.fixture(scope="function")
+def setup_and_teardown(postgres_container, rabbitmq_container):
     dotenv.load_dotenv('.env.test')
 
-    settings.SQLALCHEMY_DATABASE_URL = postgres_container.get_connection_url()
+    import os
+    os.environ['SQLALCHEMY_DATABASE_URL'] = postgres_container.get_connection_url()
+    os.environ['RABBITMQ_URL'] = rabbitmq_container.get_connection_url()
 
+    yield
+
+
+@pytest.fixture(scope="function")
+def app(setup_and_teardown):
     from app.api.endpoints import auth, users, verification, password
 
     app = FastAPI(
