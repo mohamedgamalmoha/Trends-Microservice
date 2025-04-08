@@ -18,24 +18,3 @@ def get_producer() -> UserMessageProducer:
 async def init_producer() -> None:
     producer = get_producer()
     await producer.init_user_producer()
-
-
-async def send_user_creation_message(user_data: UserCreationProducerMessage) -> None:
-    producer =  get_producer()
-    await producer.send_user_creation_message(
-        message_data=user_data.model_dump()
-    )
-
-
-async def send_user_email_verification_message(user_data: UserEmailVerificationProducerMessage) -> None:
-    producer = get_producer()
-    await producer.send_user_email_verification_message(
-        message_data=user_data.model_dump()
-    )
-
-
-async def send_user_password_forget_message(user_data: UserResetPasswordProducerMessage) -> None:
-    producer = get_producer()
-    await producer.send_user_password_forget_message(
-        message_data=user_data.model_dump()
-    )
