@@ -51,7 +51,6 @@ class MessageProducer:
             name=self.exchange_settings.name,
             type=self.exchange_settings.type,
             durable=self.exchange_settings.durable,
-            robust=self.exchange_settings.robust
         )
 
     async def declare_queues(self) -> None:
@@ -65,7 +64,6 @@ class MessageProducer:
             queue= await self.channel.declare_queue(
                 name=queue_setting.name,
                 durable=queue_setting.durable,
-                robust=queue_setting.robust
             )
             await queue.bind(self.exchange)
 
