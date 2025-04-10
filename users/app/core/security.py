@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Dict, Any
 from datetime import datetime, timedelta, timezone
 
@@ -23,7 +24,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_token(email: str, expires_minutes: int, key: str, algorithm: str) -> str:
+def _create_token(email: str, expires_minutes: int, key: str, algorithm: str) -> str:
 
     expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
 
@@ -41,7 +42,7 @@ def create_token(email: str, expires_minutes: int, key: str, algorithm: str) -> 
     return encoded_jwt
 
 
-def decode_token(token: str, key: str, algorithm: str) -> Dict[str, Any]:
+def _decode_token(token: str, key: str, algorithm: str) -> Dict[str, Any]:
     try:
         payload = jwt.decode(
             jwt=token,
@@ -58,3 +59,48 @@ def decode_token(token: str, key: str, algorithm: str) -> Dict[str, Any]:
         raise InvalidTokenError()
     else:
         return payload
+
+
+create_access_token = partial(
+    _create_token,
+    expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+    key=settings.ACCESS_TOKEN_SECRET_KEY,
+    algorithm=settings.ACCESS_TOKEN_ALGORITHM
+)
+
+
+decode_access_token = partial(
+    _decode_token,
+    key=settings.ACCESS_TOKEN_SECRET_KEY,
+    algorithm=settings.ACCESS_TOKEN_ALGORITHM
+)
+
+
+create_email_verification_token = partial(
+    _create_token,
+    expires_minutes=settings.VERIFICATION_TOKEN_EXPIRE_MINUTES,
+    key=settings.VERIFICATION_TOKEN_SECRET_KEY,
+    algorithm=settings.VERIFICATION_TOKEN_ALGORITHM
+)
+
+
+decode_email_verification_token = partial(
+    _decode_token,
+    key=settings.VERIFICATION_TOKEN_SECRET_KEY,
+    algorithm=settings.VERIFICATION_TOKEN_ALGORITHM
+)
+
+
+create_password_reset_token = partial(
+    _create_token,
+    expires_minutes=settings.PASSWORD_REST_TOKEN_EXPIRE_MINUTES,
+    key=settings.PASSWORD_REST_TOKEN_SECRET_KEY,
+    algorithm=settings.PASSWORD_REST_TOKEN_ALGORITHM
+)
+
+
+decode_password_reset_token = partial(
+    _decode_token,
+    key=settings.PASSWORD_REST_TOKEN_SECRET_KEY,
+    algorithm=settings.PASSWORD_REST_TOKEN_ALGORITHM
+)
