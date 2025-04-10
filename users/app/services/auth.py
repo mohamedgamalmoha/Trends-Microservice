@@ -2,8 +2,6 @@ from fastapi import Depends
 
 from app.core.security import verify_password, create_access_token, decode_access_token
 from app.models.user import User
-from app.schemas.token import Token
-from app.schemas.user import UserLogin
 from app.services.user import UserService, get_user_service
 from app.exceptions import InvalidUserCredentials
 
@@ -25,22 +23,23 @@ class AuthService:
         """
         self.user_service = user_service
 
-    async def create_auth_token(self, user_data: UserLogin) -> Token:
+    async def create_auth_token(self, email: str, password: str) -> str:
         """
         Authenticate the user and generate an access token.
 
         Args:
-            - user_data (UserLogin): The login credentials of the user.
+            - email (str): The user's email.
+            - password (str): The user's  password input.
 
         Returns:
-            - Token: A JWT access token for the authenticated user.
+            - token (str): A JWT access token for the authenticated user.
 
         Raises:
             - InvalidUserCredentials: If the user's credentials are invalid.
         """
         user_data = await self.authenticate(
-            email=user_data.email,
-            password=user_data.password
+            email=email,
+            password=password
         )
         return create_access_token(email=user_data.email)
 
@@ -73,36 +72,9 @@ class AuthService:
             - InvalidUserCredentials: If the credentials are incorrect.
         """
         user_db = await self.user_service.get_user_by_email(email=email)
-        if not self.verify_password(password_to_compare=password, password=user_db.hased_password):
+        if not verify_password(plain_password=password, hashed_password=user_db.hased_password):
             raise InvalidUserCredentials()
         return user_db
-
-    @staticmethod
-    def verify_auth_token(token: str) -> str:
-        """
-        Decode and verify a JWT token.
-
-        Args:
-            - token (str): A JWT access token.
-
-        Returns:
-            - str: The decoded token payload (typically a dictionary as string).
-        """
-        return decode_access_token(token)
-
-    @staticmethod
-    def verify_password(password_to_compare, password) -> bool:
-        """
-        Verify whether the provided password matches the stored hashed password.
-
-        Args:
-            - password_to_compare (str): The plaintext password to check.
-            - password (str): The stored hashed password.
-
-        Returns:
-            - bool: True if the password is correct, False otherwise.
-        """
-        return verify_password(password_to_compare, password)
 
 
 def get_auth_service(user_service: UserService = Depends(get_user_service)) -> AuthService:

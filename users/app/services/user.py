@@ -1,10 +1,9 @@
-from typing import Sequence
+from typing import Sequence, Dict, Any
 
 from fastapi import Depends
 from shared_utils.exceptions import ObjAlreadyExist
 
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
 from app.repositories.base import UserModelRepository, get_user_repository
 
 
@@ -25,12 +24,15 @@ class UserService:
         """
         self.user_repository = user_repository
 
-    async def create(self, user_data: UserCreate) -> User:
+    async def create(self, username: str, email: str, password: str, **other_data: Dict[str, Any]) -> User:
         """
         Create a new user if they do not already exist.
 
         Args:
-            - user_data (UserCreate): Data required to create a new user.
+            - username (str): The username of the user to create.
+            - email (str): The email address of the user to create.
+            - password (str): The password of the user to create.
+            - **other_data (Dict[str, Any]): other data required to create a new user.
 
         Returns:
             - User: The created user object.
@@ -39,16 +41,17 @@ class UserService:
             - ObjAlreadyExist: If a user with the same username or email already exists.
         """
         is_user_exist = await self.user_repository.is_exist(
-            username=user_data.username,
-            email=user_data.email
+            username=username,
+            email=email
         )
         if is_user_exist:
-            raise ObjAlreadyExist
+            raise ObjAlreadyExist()
 
-        user_db_data = user_data.model_dump(exclude=['password', 'password_confirm'])
         user_db = await self.user_repository.create(
-            **user_db_data,
-            hashed_password=user_data.password
+            username=username,
+            email=email,
+            hashed_password=password,
+            **other_data
         )
 
         return user_db
@@ -101,21 +104,20 @@ class UserService:
         """
         return await self.user_repository.get_all()
 
-    async def update(self, id: int, user_data: UserUpdate) -> User:
+    async def update(self, id: int, **update_data: Dict[str, Any]) -> User:
         """
         Update an existing user's information.
 
         Args:
             - id (int): The ID of the user to update.
-            - user_data (UserUpdate): The new data for the user.
+            - **user_data (Dict[str, Any]): The new data for the user.
 
         Returns:
             - User: The updated user object.
         """
-        user_db_data = user_data.model_dump()
         return await self.user_repository.update(
             id=id,
-            **user_db_data
+            **update_data
         )
 
     async def set_password(self, id: int, new_password: str) -> None:
