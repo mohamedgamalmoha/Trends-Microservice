@@ -71,6 +71,9 @@ class UserService:
 
         Returns:
             - User: The user object corresponding to the given email.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given email.
         """
         return await self.user_repository.get_by_email(email=email)
 
@@ -83,6 +86,9 @@ class UserService:
 
         Returns:
             - User: The user object corresponding to the given username.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given username.
         """
         return await self.user_repository.get_by_username(username=username)
 

@@ -35,7 +35,8 @@ class AuthService:
             - token (str): A JWT access token for the authenticated user.
 
         Raises:
-            - InvalidUserCredentials: If the user's credentials are invalid.
+            - ObjDoesNotExist: If no instance is found with the given email.
+            - InvalidUserCredentials: If the credentials are incorrect.
         """
         user_data = await self.authenticate(
             email=email,
@@ -52,8 +53,17 @@ class AuthService:
 
         Returns:
             - User: The authenticated user associated with the token.
+
+        Raises:
+            - InvalidTokenError: if the token is invalid.
+            - TokenExpiredError: if the token is expired.
+            - AssertionError: if the token`s pyload doesn't have an email.
+            - ObjDoesNotExist: if there is no user matches the token`s pyload email.
         """
         payload = decode_access_token(token)
+
+        assert 'email' in payload
+
         user_db = await self.user_service.get_by_email(email=payload['email'])
         return user_db
 
@@ -69,6 +79,7 @@ class AuthService:
             - User: The authenticated user object.
 
         Raises:
+            - ObjDoesNotExist: If no instance is found with the given email.
             - InvalidUserCredentials: If the credentials are incorrect.
         """
         user_db = await self.user_service.get_user_by_email(email=email)
