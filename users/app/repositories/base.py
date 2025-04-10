@@ -117,7 +117,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         )
         return result.scalar()
 
-    async def get_user_by_email(self, email: str) -> User:
+    async def get_by_email(self, email: str) -> User:
         """
         Retrieve an active user by email.
 
@@ -132,7 +132,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
             is_active=True
         )
 
-    async def get_user_by_username(self, username: str) -> User:
+    async def get_by_username(self, username: str) -> User:
         """
         Retrieve an active user by username.
 
