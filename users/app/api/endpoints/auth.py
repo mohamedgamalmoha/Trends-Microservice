@@ -3,10 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from shared_utils import messages
 from shared_utils.db.session import get_db
 
+from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserRetrieve
-from app.api.deps import authenticate_user, get_current_user, create_access_token
+from app.api.deps import authenticate_user, get_current_user
 
 
 auth_router = APIRouter(

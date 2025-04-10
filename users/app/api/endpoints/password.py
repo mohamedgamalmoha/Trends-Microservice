@@ -5,13 +5,13 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from shared_utils import messages
 from shared_utils.db.session import get_db
 
+from app.core.security import create_password_reset_token, decode_password_reset_token
 from app.repositories.user import get_user_by_email, reset_user_password
 from app.schemas.password import UserPasswordReset, UsePasswordResetConfirmation
 from app.schemas.producer import UserResetPasswordProducerMessage, UserResetPasswordConfirmationProducerMessage
 from app.utils import db_model_to_dict
 from app.producer.api import get_producer
 from app.producer.producer import UserMessageProducer
-from app.api.deps import create_password_reset_token, decode_password_reset_token
 
 
 password_reset_router = APIRouter(

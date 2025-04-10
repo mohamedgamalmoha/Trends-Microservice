@@ -5,13 +5,13 @@ from fastapi import Depends, HTTPException, status, APIRouter
 from shared_utils import messages
 from shared_utils.db.session import get_db
 
+from app.core.security import create_email_verification_token, decode_email_verification_token
 from app.repositories.user import get_user_by_email, activate_user
 from app.schemas.verification import UserEmailVerification, UserEmailVerificationConfirmation
 from app.schemas.producer import UserEmailVerificationProducerMessage
 from app.utils import db_model_to_dict
 from app.producer.api import get_producer
 from app.producer.producer import UserMessageProducer
-from app.api.deps import create_email_verification_token, decode_email_verification_token
 
 
 email_verification_router = APIRouter(
