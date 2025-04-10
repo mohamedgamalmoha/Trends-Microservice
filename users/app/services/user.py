@@ -1,7 +1,6 @@
 from typing import Sequence, Dict, Any
 
 from fastapi import Depends
-from shared_utils.exceptions import ObjAlreadyExist
 
 from app.models.user import User
 from app.repositories.base import UserModelRepository, get_user_repository
@@ -40,20 +39,12 @@ class UserService:
         Raises:
             - ObjAlreadyExist: If a user with the same username or email already exists.
         """
-        is_user_exist = await self.user_repository.is_exist(
-            username=username,
-            email=email
-        )
-        if is_user_exist:
-            raise ObjAlreadyExist()
-
         user_db = await self.user_repository.create(
             username=username,
             email=email,
             hashed_password=password,
             **other_data
         )
-
         return user_db
 
     async def get_by_id(self, id: int) -> User:
@@ -114,6 +105,9 @@ class UserService:
 
         Returns:
             - User: The updated user object.
+
+        Raises:
+            - AssertionError: If password field name is passed within `update_data`.
         """
         return await self.user_repository.update(
             id=id,
@@ -121,6 +115,13 @@ class UserService:
         )
 
     async def set_password(self, id: int, new_password: str) -> None:
+        """
+        Set a new password for the user.
+
+        Args:
+            - id (int): ID of the user.
+            - new_password (str): New plain-text password to be hashed and stored.
+        """
         await self.user_repository.set_password(id=id, new_password=new_password)
 
     async def delete(self, id: int) -> None:
