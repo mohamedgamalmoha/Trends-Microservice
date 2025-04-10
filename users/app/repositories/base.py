@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
-from shared_utils.exceptions import ObjDoesNotExist
+from shared_utils.exceptions import ObjDoesNotExist, ObjAlreadyExist
 from shared_utils.repository.sqlalchemy import SQLAlchemyModelRepository
 
 from app.models.user import User
@@ -42,8 +42,20 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
 
         Returns:
             - User: The created user instance.
+
+        Raises:
+            - ObjAlreadyExist: If a user with the same username or email already exists.
         """
+        assert 'email' not in kwargs
+        assert 'username' not in kwargs
         assert self.password_field_name in kwargs
+
+        is_user_exist = await self.is_exist(
+            username=kwargs['email'],
+            email=kwargs['username']
+        )
+        if is_user_exist:
+            raise ObjAlreadyExist()
 
         hashed_password = hash_password(
             kwargs.pop(self.password_field_name)
