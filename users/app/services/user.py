@@ -58,10 +58,13 @@ class UserService:
         Retrieve a user by their unique ID.
 
         Args:
-            id (int): The ID of the user to retrieve.
+            - id (int): The ID of the user to retrieve.
 
         Returns:
-            User: The user object corresponding to the given ID.
+            - User: The user object corresponding to the given ID.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await self.user_repository.get_by_id(id=id)
 
@@ -98,15 +101,6 @@ class UserService:
         """
         return await self.user_repository.get_all()
 
-    async def delete(self, id: int) -> None:
-        """
-        Delete a user by their unique ID.
-
-        Args:
-            - id (int): The ID of the user to delete.
-        """
-        await self.user_repository.delete(id=id)
-
     async def update(self, id: int, user_data: UserUpdate) -> User:
         """
         Update an existing user's information.
@@ -123,6 +117,18 @@ class UserService:
             id=id,
             **user_db_data
         )
+
+    async def set_password(self, id: int, new_password: str) -> None:
+        await self.user_repository.set_password(id=id, new_password=new_password)
+
+    async def delete(self, id: int) -> None:
+        """
+        Delete a user by their unique ID.
+
+        Args:
+            - id (int): The ID of the user to delete.
+        """
+        await self.user_repository.delete(id=id)
 
 
 def get_user_service(user_repository: UserModelRepository = Depends(get_user_repository)) -> UserService:
