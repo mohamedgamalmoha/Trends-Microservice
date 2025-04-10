@@ -1,6 +1,10 @@
 from shared_utils import messages
 
 
+class InvalidUserCredentials(Exception):
+    message = messages.INVALID_CREDENTIALS_MESSAGE
+
+
 class TokenError(Exception):
     ...
 
