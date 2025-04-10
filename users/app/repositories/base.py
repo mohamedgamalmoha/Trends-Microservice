@@ -1,9 +1,10 @@
-from typing import Sequence, Optional, Any
+from typing import Sequence, Optional
 
 from fastapi import Depends
 from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
+from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.repository.sqlalchemy import SQLAlchemyModelRepository
 
 from app.models.user import User
@@ -19,7 +20,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
     retrieving admin or active users.
     """
 
-    password_field_name: str = 'hased_password'
+    password_field_name: str = 'hashed_password'
 
     def __init__(self, db: AsyncSession) -> None:
         """
@@ -34,7 +35,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         """
         Create a new user with a hashed password.
 
-        The method expects `hased_password` in the kwargs and hashes it before saving.
+        The method expects `password_field_name` in the kwargs and hashes it before saving.
         
         Args:
             - **kwargs: Fields to create.
@@ -50,37 +51,6 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         kwargs[self.password_field_name] = hashed_password
 
         return await super().create(**kwargs)
-
-    async def update(self, id: Any, **kwargs) -> User:
-        """
-        Update user details. Does not allow password update through this method.
-
-        Args:
-            - id (Any): ID of the user to update.
-            - **kwargs: Fields to update.
-
-        Returns:
-            - User: The updated user instance.
-        """
-        assert self.password_field_name not in kwargs
-        return await super().update(id=id, **kwargs)
-
-    async def set_password(self, id, new_password: str) -> None:
-        """
-        Set a new password for the user.
-
-        Args:
-            - id: ID of the user.
-            - new_password (str): New plain-text password to be hashed and stored.
-        """
-        obj = await self.get_by_id(id=id)
-
-        hashed_password = hash_password(new_password)
-
-        setattr(obj, self.password_field_name, hashed_password)
-
-        await self.db.commit()
-        await self.db.refresh(obj)
 
     async def create_admin(self, **kwargs) -> User:
         """
@@ -126,11 +96,19 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
 
         Returns:
             - User: The matched user instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given email.
         """
-        return await self.filter_by(
+        result = await self.filter_by(
             email=email,
             is_active=True
         )
+
+        if not result:
+            raise ObjDoesNotExist
+
+        return result
 
     async def get_by_username(self, username: str) -> User:
         """
@@ -141,11 +119,19 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
 
         Returns:
             - User: The matched user instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given username.
         """
-        return await self.filter_by(
+        result = await self.filter_by(
             username=username,
             is_active=True
         )
+
+        if not result:
+            raise ObjDoesNotExist
+
+        return result
 
     async def get_active(self) -> Optional[Sequence[User]]:
         """
@@ -179,6 +165,37 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         return await self.filter_by(
             is_admin=False
         )
+
+    async def update(self, id: int, **kwargs) -> User:
+        """
+        Update user details. Does not allow password update through this method.
+
+        Args:
+            - id (Any): ID of the user to update.
+            - **kwargs: Fields to update.
+
+        Returns:
+            - User: The updated user instance.
+        """
+        assert self.password_field_name not in kwargs
+        return await super().update(id=id, **kwargs)
+
+    async def set_password(self, id, new_password: str) -> None:
+        """
+        Set a new password for the user.
+
+        Args:
+            - id: ID of the user.
+            - new_password (str): New plain-text password to be hashed and stored.
+        """
+        obj = await self.get_by_id(id=id)
+
+        hashed_password = hash_password(new_password)
+
+        setattr(obj, self.password_field_name, hashed_password)
+
+        await self.db.commit()
+        await self.db.refresh(obj)
 
 
 def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserModelRepository:
