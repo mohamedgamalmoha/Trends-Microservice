@@ -1,63 +1,38 @@
-from fastapi import Depends
-
-from app.core.security import create_password_reset_token, decode_password_reset_token
-from app.models.user import User
-from app.services.user import UserService, get_user_service
+from app.core.security import verify_password
 
 
 class PasswordService:
     """
-    A service for handling password reset token operations for users.
+    A service class responsible for handling password-related operations.
+
+    This class provides an abstraction over low-level password utilities,
+    such as verifying a plain-text password against its hashed version.
+    It helps encapsulate authentication logic and can be easily extended or
+    replaced for testing or customization purposes.
     """
 
-    def __init__(self, user_service: UserService) -> None:
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
-        Initialize the PasswordService with a UserService instance.
+        Verify whether the provided plain-text password matches the hashed password.
 
         Args:
-            - user_service (UserService): A service to manage and retrieve user information.
-        """
-        self.user_service = user_service
-
-    async def create_reset_token(self, email: str) -> str:
-        """
-        Create a password reset token for a user identified by their email.
-
-        Args:
-            - email (str): The email address of the user requesting a password reset.
+        - plain_password (str): The plain-text password input provided by the user.
+        - hashed_password (str): The hashed version of the password stored in the database.
 
         Returns:
-            - str: A password reset token tied to the user's email.
+            - bool: Returns True if the plain-text password matches the hashed version; otherwise, returns False.
         """
-        db_user = await self.user_service.get_by_email(email=email)
-        return create_password_reset_token(email=db_user.email)
-
-    async def decode_reset_token(self, token: str) -> User:
-        """
-        Decode a password reset token and retrieve the corresponding user.
-
-        Args:
-            - token (str): The password reset token to decode.
-
-        Returns:
-            - User: The user associated with the decoded token.
-        """
-        pyload = decode_password_reset_token(token=token)
-        user_db = await self.user_service.get_by_email(email=pyload['email'])
-        return user_db
+        return verify_password(
+            plain_password=plain_password,
+            hashed_password=hashed_password
+        )
 
 
-def get_password_service(user_service: UserService = Depends(get_user_service)) -> PasswordService:
+def get_password_service() -> PasswordService:
     """
-    Dependency injection provider for PasswordService.
-
-    Args:
-        - user_service (UserService, optional): User service used for authentication logic.
-          Defaults to result of `get_user_service`.
+    Dependency injection provider for the PasswordService.
 
     Returns:
         - PasswordService: An instance of PasswordService.
     """
-    return PasswordService(
-        user_service=user_service
-    )
+    return PasswordService()
