@@ -1,104 +1,100 @@
 from fastapi import Depends
 
-from app.core.security import verify_password, create_access_token, decode_access_token
 from app.models.user import User
+from app.exceptions import InvalidUserCredentials, InvalidTokenError
 from app.services.user import UserService, get_user_service
-from app.exceptions import InvalidUserCredentials
+from app.services.password import PasswordService, get_password_service
+from app.services.access_token import AccessTokenService, get_access_token_service
 
 
 class AuthService:
     """
-    Service class for handling user authentication and authorization.
+    A service class responsible for handling user authentication.
 
-    Provides methods for authenticating users, generating access tokens,
-    and verifying token and password validity.
+    Supports both basic authentication (email and password) and
+    token-based authentication using JSON Web Tokens (JWT).
     """
 
-    def __init__(self, user_service: UserService) -> None:
+    def __init__(
+            self,
+            user_service: UserService,
+            password_service: PasswordService,
+            token_service: AccessTokenService
+    ) -> None:
         """
-        Initialize the AuthService with a UserService instance.
+        Initialize the AuthService with its dependencies.
 
         Args:
-            - user_service (UserService): The user service used to retrieve user data.
+            - user_service (UserService): Service for accessing user data.
+            - password_service (PasswordService): Service for verifying user passwords.
+            - token_service (TokenService): Service for creating and decoding access tokens.
         """
         self.user_service = user_service
+        self.password_service = password_service
+        self.token_service = token_service
 
-    async def create_auth_token(self, email: str, password: str) -> str:
+    async def authenticate_basic(self, email: str, password: str) -> User:
         """
-        Authenticate the user and generate an access token.
+        Authenticate a user using basic authentication (email and password).
 
         Args:
-            - email (str): The user's email.
-            - password (str): The user's  password input.
-
-        Returns:
-            - token (str): A JWT access token for the authenticated user.
-
-        Raises:
-            - ObjDoesNotExist: If no instance is found with the given email.
-            - InvalidUserCredentials: If the credentials are incorrect.
-        """
-        user_data = await self.authenticate(
-            email=email,
-            password=password
-        )
-        return create_access_token(email=user_data.email)
-
-    async def get_auth_user(self, token: str) -> User:
-        """
-        Retrieve the authenticated user from a JWT token.
-
-        Args:
-            - token (str): A JWT access token.
-
-        Returns:
-            - User: The authenticated user associated with the token.
-
-        Raises:
-            - InvalidTokenError: if the token is invalid.
-            - TokenExpiredError: if the token is expired.
-            - AssertionError: if the token`s pyload doesn't have an email.
-            - ObjDoesNotExist: if there is no user matches the token`s pyload email.
-        """
-        payload = decode_access_token(token)
-
-        assert 'email' in payload
-
-        user_db = await self.user_service.get_by_email(email=payload['email'])
-        return user_db
-
-    async def authenticate(self, email: str, password: str) -> User:
-        """
-        Authenticate a user based on email and password.
-
-        Args:
-            - email (str): The user's email.
-            - password (str): The user's raw password input.
+            - email (str): The user's email address.
+            - password (str): The user's plain-text password.
 
         Returns:
             - User: The authenticated user object.
 
         Raises:
             - ObjDoesNotExist: If no instance is found with the given email.
-            - InvalidUserCredentials: If the credentials are incorrect.
+            - InvalidUserCredentials: If authentication fails due to invalid credentials.
         """
-        user_db = await self.user_service.get_user_by_email(email=email)
-        if not verify_password(plain_password=password, hashed_password=user_db.hased_password):
+        user = await self.user_service.get_by_email(email=email)
+
+        if not self.password_service.verify_password(password, user.hashed_password):
             raise InvalidUserCredentials()
-        return user_db
+
+        return user
+
+    async def authenticate_token(self, token: str) -> User:
+        """
+        Authenticate a user using a JWT access token.
+
+        Args:
+            - token (str): The JWT token containing the user's identity.
+
+        Returns:
+            - User: The authenticated user object.
+
+        Raises:
+            - InvalidTokenError: If the token is malformed or invalid.
+            - TokenExpiredError: If the token has expired.
+            - ObjDoesNotExist: If no instance is found with the given email.
+        """
+        payload = self.token_service.decode(token)
+
+        if 'email' not in payload:
+            raise InvalidTokenError()
+
+        return await self.user_service.get_by_email(email=payload['token'])
 
 
-def get_auth_service(user_service: UserService = Depends(get_user_service)) -> AuthService:
+def get_auth_service(
+        user_service: UserService = Depends(get_user_service),
+        password_service: PasswordService = Depends(get_password_service),
+        token_service: AccessTokenService = Depends(get_access_token_service)
+) -> AuthService:
     """
-    Dependency injection provider for AuthService.
+    Dependency injection provider for the AuthService.
 
     Args:
-        - user_service (UserService, optional): User service used for authentication logic.
-          Defaults to result of `get_user_service`.
-
+        - user_service (UserService, optional): Service for accessing user data.
+        - password_service (PasswordService, optional): Service for verifying user passwords.
+        - token_service (TokenService, optional): Service for creating and decoding access tokens.
     Returns:
         - AuthService: An instance of AuthService.
     """
     return AuthService(
-        user_service=user_service
+        user_service=user_service,
+        password_service=password_service,
+        token_service=token_service
     )
