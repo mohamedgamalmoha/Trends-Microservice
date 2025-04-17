@@ -37,7 +37,7 @@ class AccessTokenService:
         Returns:
             - dict: The decoded token payload, typically containing user information.
 
-        Raises
+        Raises:
             - TokenExpiredError: If the token has expired.
             - InvalidTokenError: If the token is malformed or invalid.
         """
