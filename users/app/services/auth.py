@@ -82,7 +82,7 @@ def get_auth_service(
         user_service: UserService = Depends(get_user_service),
         password_service: PasswordService = Depends(get_password_service),
         token_service: AccessTokenService = Depends(get_access_token_service)
-) -> AuthService:
+    ) -> AuthService:
     """
     Dependency injection provider for the AuthService.
 
