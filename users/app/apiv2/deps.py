@@ -14,7 +14,7 @@ async def get_current_user(
     ) -> User:
 
     try:
-        user = await auth_service.get_auth_user(token=token)
+        user = await auth_service.authenticate_token(token=token)
     except (TokenExpiredError, InvalidTokenError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -25,7 +25,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=messages.USER_NOT_FOUND_MESSAGE
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=messages.INVALID_TOKEN_MESSAGE

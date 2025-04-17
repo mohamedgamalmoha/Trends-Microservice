@@ -7,8 +7,7 @@ from shared_utils.exceptions import ObjDoesNotExist, ObjAlreadyExist
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserRetrieve
 from app.services.user import UserService, get_user_service
-from app.producer.api import get_producer
-from app.producer.producer import UserMessageProducer
+from app.producer.api import UserMessageProducer, get_producer
 from app.apiv2.deps import get_current_user, get_current_admin_user
 
 

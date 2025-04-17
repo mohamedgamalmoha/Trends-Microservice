@@ -6,6 +6,7 @@ from app.schemas.token import Token
 from app.schemas.user import UserLogin
 from app.services.user import UserService, get_user_service
 from app.services.auth import AuthService, get_auth_service
+from app.services.access_token import AccessToken, get_access_token_service
 from app.apiv2.deps import get_current_user
 
 
@@ -18,9 +19,10 @@ auth_router = APIRouter(
 @auth_router.post('/create/', status_code=status.HTTP_200_OK, response_model=Token)
 async def create_jwt_route(
         user_data: UserLogin,
-        auth_service: AuthService = Depends(get_auth_service)
+        auth_service: AuthService = Depends(get_auth_service),
+        access_token_service: AccessToken = Depends(get_access_token_service)
     ):
-    user = await auth_service.authenticate(email=user_data.email, password=user_data.password)
+    user = await auth_service.authenticate_basic(email=user_data.email, password=user_data.password)
 
     if user is None:
         raise HTTPException(
@@ -28,7 +30,7 @@ async def create_jwt_route(
             detail=messages.INVALID_CREDENTIALS_MESSAGE
         )
 
-    access_token = await auth_service.create_auth_token(email=user.email)
+    access_token = await access_token_service.create(email=user.email)
 
     return Token(access_token=access_token)
 
