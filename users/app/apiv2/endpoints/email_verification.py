@@ -2,8 +2,10 @@ from datetime import datetime
 
 from fastapi import Depends, HTTPException, status, APIRouter
 from shared_utils import messages
+from shared_utils.exceptions import ObjDoesNotExist
 
 from app.utils import db_model_to_dict
+from app.exceptions import TokenExpiredError, InvalidTokenError
 from app.schemas.verification import UserEmailVerification, UserEmailVerificationConfirmation
 from app.schemas.producer import UserEmailVerificationProducerMessage
 from app.services.user import UserService, get_user_service
@@ -25,13 +27,14 @@ async def send_email_verification(
         producer: UserMessageProducer = Depends(get_producer)
     ):
 
-    db_user = await user_service.get_by_email(email=user_data.email)
-    if not db_user:
+    try:
+        db_user = await user_service.get_by_email(email=user_data.email)
+    except ObjDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=messages.USER_NOT_FOUND_MESSAGE
         )
-
+    
     if db_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -60,18 +63,26 @@ async def confirm_email_verification(
         producer: UserMessageProducer = Depends(get_producer)
     ):
 
-    pyload =  email_verification_service.decode(token=user_data.verification_token)
-
-    email = pyload.get('email', None)
-
-    db_user = await user_service.get_by_email(email=email)
-    if not db_user:
+    try:
+        payload =  email_verification_service.decode(token=user_data.verification_token)
+        db_user = await user_service.get_by_email(email=payload['email'])
+    except (TokenExpiredError, InvalidTokenError) as e:
+       raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except ObjDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=messages.USER_NOT_FOUND_MESSAGE
-    )
-
-    expire = pyload.get('expire', None)
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=messages.INVALID_TOKEN_MESSAGE,
+        )
+    
+    expire = payload.get('expire', None)
     if expire and datetime.fromisoformat(expire) < datetime.now():
       raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

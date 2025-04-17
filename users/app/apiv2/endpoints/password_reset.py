@@ -2,8 +2,10 @@ from datetime import datetime
 
 from fastapi import Depends, HTTPException, status, APIRouter
 from shared_utils import messages
+from shared_utils.exceptions import ObjDoesNotExist
 
 from app.utils import db_model_to_dict
+from app.exceptions import TokenExpiredError, InvalidTokenError
 from app.schemas.password import UserPasswordReset, UsePasswordResetConfirmation
 from app.schemas.producer import UserResetPasswordProducerMessage, UserResetPasswordConfirmationProducerMessage
 from app.services.user import UserService, get_user_service
@@ -25,12 +27,13 @@ async def request_password_reset(
         producer: UserMessageProducer = Depends(get_producer)
     ):
 
-    db_user = await user_service.get_by_email(email=user_data.email)
-    if not db_user:
+    try:
+        db_user = await user_service.get_by_email(email=user_data.email)
+    except ObjDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=messages.USER_NOT_FOUND_MESSAGE
-    )
+        )
 
     user_data = db_model_to_dict(instance=db_user)
 
@@ -53,14 +56,23 @@ async def confirm_password_reset(
         password_reset_service: PasswordResetTokenService = Depends(get_password_reset_token_service),
         producer: UserMessageProducer = Depends(get_producer)
     ):
-
-    payload =  password_reset_service.decode(token=user_data.reset_token)
-
-    db_user = await user_service.get_by_email(email=payload['email'])
-    if not db_user:
+    try:
+        payload =  password_reset_service.decode(token=user_data.reset_token)
+        db_user = await user_service.get_by_email(email=payload['email'])
+    except (TokenExpiredError, InvalidTokenError) as e:
+       raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except ObjDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=messages.USER_NOT_FOUND_MESSAGE
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=messages.INVALID_TOKEN_MESSAGE,
         )
 
     expire = payload.get('expire', None)
