@@ -37,8 +37,8 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         Raises:
             - ObjAlreadyExist: If a user with the same username or email already exists.
         """
-        assert 'email' not in kwargs
-        assert 'username' not in kwargs
+        assert 'email' in kwargs
+        assert 'username' in kwargs
         assert self.password_field_name in kwargs
 
         is_user_exist = await self.is_exist(
