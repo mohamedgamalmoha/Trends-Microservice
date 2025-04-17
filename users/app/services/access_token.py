@@ -1,7 +1,7 @@
 from app.core.security import create_access_token, decode_access_token
 
 
-class TokenService:
+class AccessTokenService:
     """
     A service class responsible for managing access tokens.
 
@@ -44,11 +44,11 @@ class TokenService:
         return decode_access_token(token)
 
 
-def get_token_service() -> TokenService:
+def get_access_token_service() -> AccessTokenService:
     """
-    Dependency injection provider for the TokenService.
+    Dependency injection provider for the AccessTokenService.
 
     Returns:
-        - TokenService: An instance of TokenService.
+        - AccessTokenService: An instance of AccessTokenService.
     """
-    return TokenService()
+    return AccessTokenService()
