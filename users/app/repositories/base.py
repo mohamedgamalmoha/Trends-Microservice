@@ -22,15 +22,6 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
 
     password_field_name: str = 'hashed_password'
 
-    def __init__(self, db: AsyncSession) -> None:
-        """
-        Initialize the repository with a database session.
-
-        Args:
-            - db (AsyncSession): The SQLAlchemy async session.
-        """
-        super().__init__(db=db, model_class=User)
-
     async def create(self, **kwargs) -> User:
         """
         Create a new user with a hashed password.
