@@ -46,20 +46,14 @@ def app_setup_and_teardown(postgres_container):
 
 @pytest.fixture(scope="function")
 def app(app_setup_and_teardown):
-    from app.api.endpoints import auth, users, verification, password
+    from app.api.v1 import v1_api_router
     from app.producer.api import get_producer
 
     app = FastAPI(
-        lifespan=lifespan,
-        docs_url='/api/users/docs',
-        redoc_url='/api/users/redoc',
-        openapi_url='/api/users/openapi.json'
+        lifespan=lifespan
     )
 
-    app.include_router(auth.auth_router, prefix='/api')
-    app.include_router(users.user_router, prefix='/api')
-    app.include_router(verification.email_verification_router, prefix='/api')
-    app.include_router(password.password_reset_router, prefix='/api')
+    app.include_router(v1_api_router, prefix='/api')
 
     app.dependency_overrides[get_producer] = get_custom_producer
 
