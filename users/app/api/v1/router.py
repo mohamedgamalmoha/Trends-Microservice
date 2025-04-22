@@ -4,8 +4,7 @@ from app.api.v1.endpoints import auth, user, email_verification, password_reset
 
 
 v1_api_router = APIRouter(
-    prefix='/v1',
-    tags=['v1']
+    prefix='/v1'
 )
 
 v1_api_router.include_router(auth.auth_router)
