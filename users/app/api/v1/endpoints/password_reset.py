@@ -26,7 +26,24 @@ async def request_password_reset(
         password_reset_service: PasswordResetTokenService = Depends(get_password_reset_token_service),
         producer: UserMessageProducer = Depends(get_producer)
     ):
+    """
+    Initiate the password reset process by generating a reset token and sending a reset email.
 
+    This endpoint receives the user's email, verifies the user exists, generates a password reset
+    token, and sends an email with the reset instructions via a message producer.
+
+    Args:
+        - user_data (UserPasswordReset): The email address of the user requesting a password reset.
+        - user_service (UserService): Service used to retrieve the user from the database.
+        - password_reset_service (PasswordResetTokenService): Service to generate the reset token.
+        - producer (UserMessageProducer): Message producer used to send the reset email event.
+
+    Returns:
+        - None: Returns HTTP 204 No Content upon successful request initiation.
+
+    Raises:
+        - HTTPException: 404 Not Found if the user with the given email does not exist.
+    """
     try:
         db_user = await user_service.get_by_email(email=user_data.email)
     except ObjDoesNotExist:
@@ -56,6 +73,27 @@ async def confirm_password_reset(
         password_reset_service: PasswordResetTokenService = Depends(get_password_reset_token_service),
         producer: UserMessageProducer = Depends(get_producer)
     ):
+    """
+    Confirm and complete the password reset process using a valid reset token.
+
+    This endpoint verifies the reset token, ensures it hasn't expired, and updates the user's
+    password if everything is valid. It should also trigger a notification (e.g., email) that
+    the password was successfully changed.
+
+    Args:
+        - user_data (UsePasswordResetConfirmation): Contains the reset token and new password.
+        - user_service (UserService): Service for fetching and updating the user's data.
+        - password_reset_service (PasswordResetTokenService): Service to validate the token.
+        - producer (UserMessageProducer): Message producer for post-reset notifications (TODO).
+
+    Returns:
+        - None: Returns HTTP 200 OK upon successful password reset.
+
+    Raises:
+        - HTTPException: 400 Bad Request if the token is invalid or expired.
+        - HTTPException: 404 Not Found if the user does not exist or the token is expired.
+        - HTTPException: 400 Bad Request if token payload is malformed or missing required data.
+    """
     try:
         payload =  password_reset_service.decode(token=user_data.reset_token)
         db_user = await user_service.get_by_email(email=payload['email'])

@@ -26,7 +26,26 @@ async def send_email_verification(
         email_verification_service: EmailVerificationTokenService = Depends(get_email_verification_token_service),
         producer: UserMessageProducer = Depends(get_producer)
     ):
+    """
+    Send an email verification token to a user who has not yet activated their account.
 
+    This endpoint verifies that the user exists and is not already active. If valid,
+    it generates a verification token and triggers a background message to send a
+    verification email.
+
+    Args:
+        - user_data (UserEmailVerification): The user's email to verify.
+        - user_service (UserService): Service used to retrieve user data from the database.
+        - email_verification_service (EmailVerificationTokenService): Service to generate the verification token.
+        - producer (UserMessageProducer): Message producer used to send the verification email event.
+
+    Returns:
+        - None: Returns HTTP 204 No Content upon successful processing.
+
+    Raises:
+        - HTTPException: 404 Not Found if the user with the given email does not exist.
+        - HTTPException: 400 Bad Request if the user is already active.
+    """
     try:
         db_user = await user_service.get_by_email(email=user_data.email)
     except ObjDoesNotExist:
@@ -62,7 +81,26 @@ async def confirm_email_verification(
         email_verification_service: EmailVerificationTokenService = Depends(get_email_verification_token_service),
         producer: UserMessageProducer = Depends(get_producer)
     ):
+    """
+    Confirm a user's email address using a verification token and activate their account.
 
+    This endpoint decodes the email verification token, validates it, checks for expiration,
+    and activates the user account if everything is valid. Intended to be called when a user
+    clicks the verification link sent to their email.
+
+    Args:
+        - user_data (UserEmailVerificationConfirmation): Contains the verification token.
+        - user_service (UserService): Service to retrieve and update user data.
+        - email_verification_service (EmailVerificationTokenService): Service to decode and verify the token.
+        - producer (UserMessageProducer): Message producer for sending a confirmation event (TODO).
+
+    Returns:
+        - None: Returns HTTP 204 No Content upon successful email verification.
+
+    Raises:
+        - HTTPException: 400 Bad Request if the token is invalid or malformed.
+        - HTTPException: 404 Not Found if the user does not exist or the token has expired.
+    """
     try:
         payload =  email_verification_service.decode(token=user_data.verification_token)
         db_user = await user_service.get_by_email(email=payload['email'])
