@@ -46,7 +46,7 @@ async def create_jwt_route(
             detail=messages.INVALID_CREDENTIALS_MESSAGE
         )
 
-    access_token = await access_token_service.create(email=user.email)
+    access_token = access_token_service.create(email=user.email)
 
     return Token(access_token=access_token)
 
