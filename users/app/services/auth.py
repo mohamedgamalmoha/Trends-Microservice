@@ -75,7 +75,7 @@ class AuthService:
         if 'email' not in payload:
             raise InvalidTokenError()
 
-        return await self.user_service.get_by_email(email=payload['token'])
+        return await self.user_service.get_by_email(email=payload['email'])
 
 
 def get_auth_service(
