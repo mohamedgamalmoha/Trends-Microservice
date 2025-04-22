@@ -90,6 +90,7 @@ def get_auth_service(
         - user_service (UserService, optional): Service for accessing user data.
         - password_service (PasswordService, optional): Service for verifying user passwords.
         - token_service (TokenService, optional): Service for creating and decoding access tokens.
+
     Returns:
         - AuthService: An instance of AuthService.
     """
