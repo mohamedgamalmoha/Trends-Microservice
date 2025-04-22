@@ -42,7 +42,7 @@ class UserService:
         user_db = await self.user_repository.create(
             username=username,
             email=email,
-            hashed_password=password,
+            password=password,
             **other_data
         )
         return user_db
