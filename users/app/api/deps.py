@@ -32,7 +32,7 @@ async def get_current_user(
             - or if an unexpected error occurs during authentication.
     """
     try:
-        user = await auth_service.authenticate_token(token=token)
+        user = await auth_service.authenticate_token(token=token.credentials)
     except (TokenExpiredError, InvalidTokenError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
