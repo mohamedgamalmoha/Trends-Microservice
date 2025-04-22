@@ -3,7 +3,7 @@ from typing import Sequence, Dict, Any
 from fastapi import Depends
 
 from app.models.user import User
-from app.repositories.base import UserModelRepository, get_user_repository
+from app.repositories.user import UserModelRepository, get_user_repository
 
 
 class UserService:
