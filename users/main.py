@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from shared_utils.core.lifespan import lifespan
 
-from app.api.endpoints import auth, users, verification, password
+from app.api.v1 import v1_api_router
 
 
 app = FastAPI(
@@ -11,7 +11,4 @@ app = FastAPI(
     openapi_url='/api/users/openapi.json'
 )
 
-app.include_router(auth.auth_router, prefix='/api')
-app.include_router(users.user_router, prefix='/api')
-app.include_router(verification.email_verification_router, prefix='/api')
-app.include_router(password.password_reset_router, prefix='/api')
+app.include_router(v1_api_router, prefix='/api')
