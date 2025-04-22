@@ -20,16 +20,15 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
     retrieving admin or active users.
     """
 
-    password_field_name: str = 'hashed_password'
-
-    async def create(self, **kwargs) -> User:
+    async def create(self, email: str, username: str, password: str, **other_fields) -> User:
         """
         Create a new user with a hashed password.
 
-        The method expects `password_field_name` in the kwargs and hashes it before saving.
-        
         Args:
-            - **kwargs: Fields to create.
+            - email(str): User`s email to create.
+            - username(str): User`s username to create.
+            - password: User`s password to create.
+            - **other_fields: Remaining fields to create.
 
         Returns:
             - User: The created user instance.
@@ -37,35 +36,37 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         Raises:
             - ObjAlreadyExist: If a user with the same username or email already exists.
         """
-        assert 'email' in kwargs
-        assert 'username' in kwargs
-        assert self.password_field_name in kwargs
-
         is_user_exist = await self.is_exist(
-            username=kwargs['email'],
-            email=kwargs['username']
+            username=username,
+            email=email
         )
         if is_user_exist:
             raise ObjAlreadyExist()
 
-        hashed_password = hash_password(
-            kwargs.pop(self.password_field_name)
-        )
-        kwargs[self.password_field_name] = hashed_password
+        hashed_password = hash_password(password=password)
 
-        return await super().create(**kwargs)
+        return await super().create(email=email, username=username, hashed_password=hashed_password, **other_fields)
 
-    async def create_admin(self, **kwargs) -> User:
+    async def create_admin(self, email: str, username: str, password: str, **other_fields) -> User:
         """
         Create a new admin user. Defaults to `is_active=True` and `is_admin=True`.
 
+        Args:
+            - email(str): Admin`s email to create.
+            - username(str): Admin`s username to create.
+            - password: Admin`s password to create.
+            - **other_fields: Fields to create.
+
         Returns:
             - User: The created admin user instance.
+
+        Raises:
+            - ObjAlreadyExist: If a user with the same username or email already exists.
         """
-        kwargs.setdefault('is_active', True)
-        kwargs.setdefault('ia_admin', True)
-        
-        return await self.create(**kwargs)
+        other_fields.setdefault('is_active', True)
+        other_fields.setdefault('ia_admin', True)
+
+        return await self.create(email=email, username=username, password=password, **other_fields)
 
     async def is_exist(self, email: str, username: str) -> bool:
         """
@@ -169,33 +170,37 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
             is_admin=False
         )
 
-    async def update(self, id: int, **kwargs) -> User:
+    async def update(self, id: int, **fields) -> User:
         """
         Update user details. Does not allow password update through this method.
 
         Args:
-            - id (Any): ID of the user to update.
-            - **kwargs: Fields to update.
+            - id (int): ID of the user to update.
+            - **fields: Fields to update.
 
         Returns:
             - User: The updated user instance.
-        """
-        assert self.password_field_name not in kwargs
-        return await super().update(id=id, **kwargs)
 
-    async def set_password(self, id, new_password: str) -> None:
+        Raises:
+            - ValueError: If password is included in the fields to update.
+        """
+        if 'password' in fields:
+            raise ValueError("Password update is not allowed through this method, use `set_password` instead.")
+        return await super().update(id=id, **fields)
+
+    async def set_password(self, id: int, new_password: str) -> None:
         """
         Set a new password for the user.
 
         Args:
-            - id: ID of the user.
+            - id (int): ID of the user.
             - new_password (str): New plain-text password to be hashed and stored.
         """
         obj = await self.get_by_id(id=id)
 
         hashed_password = hash_password(new_password)
 
-        setattr(obj, self.password_field_name, hashed_password)
+        setattr(obj, 'hashed_password', hashed_password)
 
         await self.db.commit()
         await self.db.refresh(obj)
