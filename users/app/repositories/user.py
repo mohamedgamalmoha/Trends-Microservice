@@ -1,155 +1,221 @@
-from typing import Type, Sequence
+from typing import Sequence, Optional
 
 from fastapi import Depends
 from sqlalchemy.sql import select, exists, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
+from shared_utils.exceptions import ObjDoesNotExist, ObjAlreadyExist
+from shared_utils.repository.sqlalchemy import SQLAlchemyModelRepository
 
 from app.models.user import User
 from app.core.security import hash_password
-from app.schemas.user import UserCreate, UserUpdate, _AdminUserCreate
 
 
-async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db)) -> User:
-    db_user = User(
-        **user.model_dump(exclude=['password', 'password_confirm']),
-        hashed_password=hash_password(user.password)
-    )
+class UserModelRepository(SQLAlchemyModelRepository[User]):
+    """
+    Repository class for interacting with the `User` model using SQLAlchemy.
 
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
+    This class provides methods for creating, updating, and retrieving user records,
+    including functionality for setting passwords, checking user existence, and 
+    retrieving admin or active users.
+    """
 
-    return db_user
+    async def create(self, email: str, username: str, password: str, **other_fields) -> User:
+        """
+        Create a new user with a hashed password.
 
+        Args:
+            - email(str): User`s email to create.
+            - username(str): User`s username to create.
+            - password: User`s password to create.
+            - **other_fields: Remaining fields to create.
 
-async def _create_admin_user(user: _AdminUserCreate, db: AsyncSession = Depends(get_db)) -> User:
-    db_user = User(
-        username=user.username,
-        email=user.email,
-        ia_active=True,
-        ia_admin=True,
-        hashed_password=hash_password(user.password)
-    )
+        Returns:
+            - User: The created user instance.
 
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
+        Raises:
+            - ObjAlreadyExist: If a user with the same username or email already exists.
+        """
+        is_user_exist = await self.is_exist(
+            username=username,
+            email=email
+        )
+        if is_user_exist:
+            raise ObjAlreadyExist()
 
-    return db_user
+        hashed_password = hash_password(password=password)
 
+        return await super().create(email=email, username=username, hashed_password=hashed_password, **other_fields)
 
-async def is_user_exist(email: str, username: str, db: AsyncSession = Depends(get_db)) -> bool:
-    result = await db.execute(
-        select(
-            exists().where(
-                or_(
-                    User.email == email,
-                    User.username == username
+    async def create_admin(self, email: str, username: str, password: str, **other_fields) -> User:
+        """
+        Create a new admin user. Defaults to `is_active=True` and `is_admin=True`.
+
+        Args:
+            - email(str): Admin`s email to create.
+            - username(str): Admin`s username to create.
+            - password: Admin`s password to create.
+            - **other_fields: Fields to create.
+
+        Returns:
+            - User: The created admin user instance.
+
+        Raises:
+            - ObjAlreadyExist: If a user with the same username or email already exists.
+        """
+        other_fields.setdefault('is_active', True)
+        other_fields.setdefault('ia_admin', True)
+
+        return await self.create(email=email, username=username, password=password, **other_fields)
+
+    async def is_exist(self, email: str, username: str) -> bool:
+        """
+        Check if a user exists with the given email or username.
+
+        Args:
+            - email (str): Email to check.
+            - username (str): Username to check.
+
+        Returns:
+            - bool: True if user exists, False otherwise.
+        """
+        result = await self.db.execute(
+            select(
+                exists().where(
+                    or_(
+                        self.model_class.email == email,
+                        self.model_class.username == username
+                    )
                 )
             )
         )
+        return result.scalar()
+
+    async def get_by_email(self, email: str) -> User:
+        """
+        Retrieve an active user by email.
+
+        Args:
+            - email (str): The email of the user.
+
+        Returns:
+            - User: The matched user instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given email.
+        """
+        result = await self.filter_by(
+            email=email,
+            is_active=True
+        )
+
+        if not result:
+            raise ObjDoesNotExist
+
+        return result
+
+    async def get_by_username(self, username: str) -> User:
+        """
+        Retrieve an active user by username.
+
+        Args:
+            - username (str): The username of the user.
+
+        Returns:
+            - User: The matched user instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given username.
+        """
+        result = await self.filter_by(
+            username=username,
+            is_active=True
+        )
+
+        if not result:
+            raise ObjDoesNotExist
+
+        return result
+
+    async def get_active(self) -> Optional[Sequence[User]]:
+        """
+        Retrieve all active users.
+
+        Returns:
+            - Optional[Sequence[User]]: A list of active users or None.
+        """
+        return await self.filter_by(
+            is_actvie=True
+        )
+
+    async def get_admin(self) -> Optional[Sequence[User]]:
+        """
+        Retrieve all admin users.
+
+        Returns:
+            - Optional[Sequence[User]]: A list of admin users or None.
+        """
+        return await self.filter_by(
+            is_admin=True
+        )
+
+    async def get_none_admin(self) -> Optional[Sequence[User]]:
+        """
+        Retrieve all non-admin users.
+
+        Returns:
+            - Optional[Sequence[User]]: A list of non-admin users or None.
+        """
+        return await self.filter_by(
+            is_admin=False
+        )
+
+    async def update(self, id: int, **fields) -> User:
+        """
+        Update user details. Does not allow password update through this method.
+
+        Args:
+            - id (int): ID of the user to update.
+            - **fields: Fields to update.
+
+        Returns:
+            - User: The updated user instance.
+
+        Raises:
+            - ValueError: If password is included in the fields to update.
+        """
+        if 'password' in fields:
+            raise ValueError("Password update is not allowed through this method, use `set_password` instead.")
+        return await super().update(id=id, **fields)
+
+    async def set_password(self, id: int, new_password: str) -> None:
+        """
+        Set a new password for the user.
+
+        Args:
+            - id (int): ID of the user.
+            - new_password (str): New plain-text password to be hashed and stored.
+        """
+        obj = await self.get_by_id(id=id)
+
+        hashed_password = hash_password(new_password)
+
+        setattr(obj, 'hashed_password', hashed_password)
+
+        await self.db.commit()
+        await self.db.refresh(obj)
+
+
+def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserModelRepository:
+    """
+    Dependency injection function to provide a UserModelRepository instance.
+
+    Args:
+        - db (AsyncSession): The SQLAlchemy async session.
+
+    Returns:
+        - UserModelRepository: A repository instance for User model operations.
+    """
+    return UserModelRepository(
+        db=db
     )
-    return result.scalar()
-
-
-async def get_user_by_id(id: int, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
-    result = await db.execute(
-        select(User).filter_by(id=id, is_active=True)
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
-    result = await db.execute(
-        select(User).filter_by(email=email, is_active=True)
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_user_by_username(username: str, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
-    result = await db.execute(
-        select(User).filter_by(username=username, is_active=True)
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_all_users(db: AsyncSession = Depends(get_db)) -> Sequence[User]:
-    result = await db.execute(select(User))
-    return result.scalars().all()
-
-
-async def get_active_users(db: AsyncSession = Depends(get_db)) -> Sequence[User]:
-    result = await db.execute(
-        select(User).filter_by(is_active=True)
-    )
-    return result.scalars().all()
-
-
-async def get_admin_users(db: AsyncSession = Depends(get_db)) -> Sequence[User]:
-    result = await db.execute(
-        select(User).filter_by(is_admin=True)
-    )
-    return result.scalars().all()
-
-
-async def get_non_admin_users(db: AsyncSession = Depends(get_db)) -> Sequence[User]:
-    result = await db.execute(
-        select(User).filter_by(is_admin=False)
-    )
-    return result.scalars().all()
-
-
-async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends(get_db)) -> Type[User] | None:
-    db_user = await get_user_by_id(user_id, db)
-
-    if not db_user:
-        return None
-
-    user_update = user.model_dump()
-    for field_name, new_field_value in user_update.items():
-        if new_field_value:
-            setattr(db_user, field_name, new_field_value)
-
-    await db.commit()
-    await db.refresh(db_user)
-
-    return db_user
-
-
-async def activate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> User | None:
-    db_user = await get_user_by_id(user_id, db)
-
-    if not db_user:
-        return None
-
-    db_user.is_active = True
-
-    await db.commit()
-    await db.refresh(db_user)
-
-    return db_user
-
-
-async def reset_user_password(user_id: int, new_password:str, db: AsyncSession = Depends(get_db)) -> User | None:
-    db_user = await get_user_by_id(user_id, db)
-
-    if not db_user:
-        return None
-
-    db_user.password = hash_password(new_password)
-
-    await db.commit()
-    await db.refresh(db_user)
-
-    return db_user
-
-
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)) -> None:
-    db_user = await get_user_by_id(user_id, db)
-
-    if not db_user:
-        return None
-
-    await db.delete(db_user)
-    await db.commit()
