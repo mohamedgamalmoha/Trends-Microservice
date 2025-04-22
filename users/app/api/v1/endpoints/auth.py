@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from shared_utils import messages
+from shared_utils.exceptions import ObjDoesNotExist
 
+from app.exceptions import InvalidUserCredentials
 from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserLogin
@@ -38,12 +40,17 @@ async def create_jwt_route(
     Raises:
         - HTTPException: 401 Unauthorized if the credentials are invalid.
     """
-    user = await auth_service.authenticate_basic(email=user_data.email, password=user_data.password)
-
-    if user is None:
+    try:
+        user = await auth_service.authenticate_basic(email=user_data.email, password=user_data.password)
+    except InvalidUserCredentials as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=messages.INVALID_CREDENTIALS_MESSAGE
+            detail=e.message
+        )
+    except ObjDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=messages.USER_NOT_FOUND_MESSAGE
         )
 
     access_token = access_token_service.create(email=user.email)
@@ -63,10 +70,10 @@ async def verify_jwt_token_route(current_user: User = Depends(get_current_user))
     Args:
         - current_user (User): The authenticated user derived from the token.
 
-    Raises:
-        - HTTPException: 401 Unauthorized if the token is invalid or user is not found.
-
     Returns:
         - None: Returns HTTP 204 No Content on successful verification.
+
+    Raises:
+        - HTTPException: 401 Unauthorized if the token is invalid or user is not found.
     """
     ...
