@@ -4,13 +4,13 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
 
 from app.core.conf import settings
 from app.exceptions import InvalidTokenError, TokenExpiredError
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+security = HTTPBearer()
 
 
 pwd_context = CryptContext(schemes=[settings.PASSWORD_CRYPT_CONTEXT_SCHEMA], deprecated='auto')

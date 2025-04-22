@@ -2,14 +2,14 @@ from fastapi import Depends, HTTPException, status
 from shared_utils import messages
 from shared_utils.exceptions import ObjDoesNotExist
 
-from app.core.security import oauth2_scheme
+from app.core.security import security
 from app.models.user import User
 from app.exceptions import InvalidTokenError, TokenExpiredError
 from app.services.auth import AuthService, get_auth_service
 
 
 async def get_current_user(
-        token: str = Depends(oauth2_scheme),
+        token: str = Depends(security),
         auth_service: AuthService = Depends(get_auth_service)
     ) -> User:
     """
