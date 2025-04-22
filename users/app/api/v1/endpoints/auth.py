@@ -4,9 +4,8 @@ from shared_utils import messages
 from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserLogin
-from app.services.user import UserService, get_user_service
 from app.services.auth import AuthService, get_auth_service
-from app.services.access_token import AccessToken, get_access_token_service
+from app.services.access_token import AccessTokenService, get_access_token_service
 from app.api.deps import get_current_user
 
 
@@ -20,7 +19,7 @@ auth_router = APIRouter(
 async def create_jwt_route(
         user_data: UserLogin,
         auth_service: AuthService = Depends(get_auth_service),
-        access_token_service: AccessToken = Depends(get_access_token_service)
+        access_token_service: AccessTokenService = Depends(get_access_token_service)
     ):
     """
     Authenticate a user using email and password, and issue a JWT access token.
