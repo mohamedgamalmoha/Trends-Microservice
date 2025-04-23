@@ -40,6 +40,15 @@ class TaskService:
         """
         return await self.task_repository.create(id=id, user_id=user_id, q=q, **other_fields)
 
+    async def get_all(self) -> Sequence[Task]:
+        """
+        Retrieve all task instances.
+
+        Returns:
+            - Sequence[Task]: A sequence of all task instances.
+        """
+        return await self.task_repository.get_all()
+
     async def filter_by_user_id(self, user_id: str) -> Sequence[Task]:
         """
         Filter tasks by user_id.
