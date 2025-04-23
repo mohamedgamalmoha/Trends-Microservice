@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from shared_utils.core.lifespan import lifespan
 
-from app.api.endpoints import task
+from app.api.v1 import v1_api_router
 
 
 app = FastAPI(
@@ -11,4 +11,4 @@ app = FastAPI(
     openapi_url='/api/search/openapi.json'
 )
 
-app.include_router(task.task_router, prefix='/api/search')
+app.include_router(v1_api_router, prefix='/api/search')
