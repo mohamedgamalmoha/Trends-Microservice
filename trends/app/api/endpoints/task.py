@@ -1,14 +1,13 @@
 from typing import List
 
 from celery import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Depends, HTTPException, status
 from shared_utils import messages
-from shared_utils.db.session import get_db
 from shared_utils.schemas.user import User
+from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.api.deps.user import get_current_user, get_current_admin_user
 
-from app.repositories.task import create_task, get_user_task_by_id, get_user_tasks, get_all_tasks, delete_task
+from app.services.task import TaskService, get_task_service
 from app.schemas.task import TaskCreate, TaskRetrieve
 from app.celery.tasks import trends_search_task
 
@@ -22,9 +21,20 @@ task_router = APIRouter(
 async def create_task_route(
         task: TaskCreate,
         current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db)
+        task_service: TaskService = Depends(get_task_service)
     ):
+    """
+    Create a new task for the current user.
+    If the user is not an admin, they can only create tasks for themselves.
 
+    Args:
+        - task (TaskCreate): The task to create.
+        - current_user (User): The current user.
+        - task_service (TaskService): The task service.
+
+    Returns:
+        - TaskRetrieve: The created task.
+    """
     if not current_user.is_admin and task.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -32,11 +42,9 @@ async def create_task_route(
         )
 
     task_id = uuid()
-
-    db_task = await create_task(
-        task_id=task_id,
-        task=task,
-        db=db
+    db_task = await task_service.create(
+        id=task_id,
+        ** task.model_dump()
     )
 
     trends_search_task.apply_async(
@@ -52,8 +60,21 @@ async def get_task_route(
         user_id: int,
         task_id: str,
         current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db)
+        task_service: TaskService = Depends(get_task_service)
     ):
+    """
+    Get a task by its ID and user ID.
+    If the user is not an admin, they can only get tasks for themselves.
+
+    Args:
+        - user_id (int): The ID of the user.
+        - task_id (str): The ID of the task.
+        - current_user (User): The current user.
+        - task_service (TaskService): The task service.
+
+    Returns:
+        - TaskRetrieve: The task if found.
+    """
 
     if not current_user.is_admin and user_id != current_user.id:
         raise HTTPException(
@@ -61,42 +82,61 @@ async def get_task_route(
             detail=messages.USER_FORBIDDEN_MESSAGE
         )
 
-    db_task = await get_user_task_by_id(user_id=user_id, task_id=task_id, db=db)
+    try:
+        db_task = await task_service.get_by_user_id(id=task_id, user_id=user_id)
+    except ObjDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.TASK_NOT_FOUND_MESSAGE
+        )
 
-    if db_task:
-        return db_task
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=messages.TASK_NOT_FOUND_MESSAGE
-    )
+    return db_task
 
 
 @task_router.get("/{user_id}/tasks/", response_model=List[TaskRetrieve])
 async def get_user_tasks_route(
         user_id: int,
         current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db)
+        task_service: TaskService = Depends(get_task_service)
     ):
+    """
+    Get all tasks for a user.
+    If the user is not an admin, they can only get tasks for themselves.
 
+    Args:
+        - user_id (int): The ID of the user.
+        - current_user (User): The current user.
+        - task_service (TaskService): The task service.
+
+    Returns:
+        - List[TaskRetrieve]: The list of tasks for the user.
+    """
     if not current_user.is_admin and user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=messages.USER_FORBIDDEN_MESSAGE
         )
 
-    return await get_user_tasks(user_id=user_id, db=db)
+    return await task_service.filter_by_user_id(user_id=user_id)
 
 
 @task_router.get("/tasks/", response_model=List[TaskRetrieve])
 async def get_tasks_route(
         current_user: User = Depends(get_current_admin_user),
-        db: AsyncSession = Depends(get_db)
+        task_service: TaskService = Depends(get_task_service)
     ):
+    """
+    Get all tasks for all users.
+    Only accessible by admin users.
 
-    db_tasks = await get_all_tasks(db=db)
+    ArgsL
+        - current_user (User): The current user.
+        - task_service (TaskService): The task service.
 
-    return db_tasks
+    Returns:
+        - List[TaskRetrieve]: The list of tasks for all users.
+    """
+    return await task_service.get_all()
 
 
 @task_router.delete("/{user_id}/task/{task_id}/", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
@@ -104,27 +144,33 @@ async def delete_task_route(
         user_id: int,
         task_id: str,
         current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db)
+        task_service: TaskService = Depends(get_task_service)
     ):
+    """
+    Delete a task by its ID and user ID.
+    If the user is not an admin, they can only delete tasks for themselves.
 
+    Args:
+        - user_id (int): The ID of the user.
+        - task_id (str): The ID of the task.
+        - current_user (User): The current user.
+        - task_service (TaskService): The task service.
+
+    Returns:
+        - None: No content.
+    """
     if not current_user.is_admin and user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=messages.USER_FORBIDDEN_MESSAGE
         )
 
-    db_task = await get_user_task_by_id(
-        user_id=user_id,
-        task_id=task_id,
-        db=db
-    )
-
-    if db_task is None:
+    try:
+        db_task = await task_service.get_by_user_id(id=task_id, user_id=user_id)
+    except ObjDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=messages.TASK_NOT_FOUND_MESSAGE
         )
 
-    await delete_task(task_id=task_id, db=db)
-
-    return None
+    await task_service.delete(id=db_task.id)
