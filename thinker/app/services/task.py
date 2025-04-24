@@ -3,7 +3,7 @@ from typing import Sequence
 from fastapi import Depends
 
 from app.models.task import Task
-from app.repositories.task import TaskRepository, get_task_repository
+from app.repositories.task import TaskModelRepository, get_task_repository
 
 
 class TaskService:
@@ -13,12 +13,12 @@ class TaskService:
     It interacts with a task repository to perform database operations.
     """
 
-    def __init__(self, task_repository: TaskRepository) -> None:
+    def __init__(self, task_repository: TaskModelRepository) -> None:
         """
         Initialize the TaskService with a task repository.
 
         Args:
-            - task_repository (TaskRepository): The repository used to interact with task data.
+            - task_repository (TaskModelRepository): The repository used to interact with task data.
         """
         self.task_repository = task_repository
 
@@ -164,12 +164,12 @@ class TaskService:
         await self.task_repository.delete(id=id)
 
 
-def get_task_service(task_repository: TaskRepository = Depends(get_task_repository)) -> TaskService:
+def get_task_service(task_repository: TaskModelRepository = Depends(get_task_repository)) -> TaskService:
     """
     Dependency to get the TaskService instance.
 
     Args:
-        - task_repository (TaskRepository): The task repository.
+        - task_repository (TaskModelRepository): The task repository.
 
     Returns:
         - TaskService: The TaskService instance.
