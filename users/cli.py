@@ -20,14 +20,13 @@ createdb
         $ python cli.py createdb
 
 testdb
-    Tests database connection using provided credentials.
-    This command attempts to establish a connection to verify accessibility
-    and credential validity. It supports multiple database engines and
-    provides detailed error information if connection fails.
+    Tests the database connection using the configured credentials.
+    This command attempts to establish a connection to the database and
+    verifies that the credentials are valid. It provides feedback on success
+    or failure.
 
     Example:
-        $ python cli.py testdb --name mydb --user dbuser --password secret123
-        $ python cli.py testdb --name analytics --user report_user --password dbpass --host db.example.com --port 5433 --engine postgresql
+        $ python cli.py testdb
 
 createadminuser
     Creates an administrator user with full system privileges.
@@ -52,23 +51,21 @@ by default. These can be overridden using command-line arguments.
 """
 from typing import Any, Callable, Type, TypeVar
 
-import click
-from pydantic import BaseModel, ValidationError
-from sqlalchemy import create_engine, Engine
+import asyncclick as click
 from sqlalchemy.exc import SQLAlchemyError
-from shared_utils.db.base import Base
-from shared_utils.db.session import engine
+from pydantic import BaseModel, ValidationError
+from shared_utils.db.session import engine, init_db, get_db
 
 from app.schemas.user import _AdminUserCreate
-from app.repositories.user import _create_admin_user
+from app.repositories.user import get_user_repository
 
 
 # Type variables for better type hinting
-T = TypeVar('T', bound=BaseModel)
-ClickCallback = Callable[[click.Context, click.Parameter, Any], Any]
+CCT = TypeVar('CCT')  # Click Callback Type
+ClickCallback = Callable[[click.Context, click.Parameter, CCT], CCT]
 
 
-def validate_pydantic_field(model: Type[BaseModel], field_name: str) -> ClickCallback:
+def validate_pydantic_field[T: BaseModel](model: Type[T], field_name: str) -> ClickCallback:
     """
     Create a Click callback to validate a field using Pydantic validation.
 
@@ -87,7 +84,7 @@ def validate_pydantic_field(model: Type[BaseModel], field_name: str) -> ClickCal
         - click.BadParameter: If validation fails
     """
 
-    def callback(ctx: click.Context, param: click.Parameter, value: Any) -> Any:
+    def callback[T](ctx: click.Context, param: click.Parameter, value: T) -> T:
         try:
             # Create an empty model instance and validate the field assignment
             model.__pydantic_validator__.validate_assignment(
@@ -99,31 +96,6 @@ def validate_pydantic_field(model: Type[BaseModel], field_name: str) -> ClickCal
         except ValidationError as e:
             raise click.BadParameter(f"Invalid {field_name}: {e}")
     return callback
-
-
-def test_db_connection(database_url: str) -> bool:
-    """
-    Test a database connection with the given URL.
-
-    This function attempts to establish a connection to a database and
-    reports the result.
-
-    Args:
-        - database_url: SQLAlchemy-compatible database connection string
-
-    Returns:
-        - bool: True if connection successful, False otherwise
-    """
-    # Create a new engine instance for this specific connection test
-    test_engine: Engine = create_engine(database_url)
-
-    try:
-        with test_engine.connect():
-            click.echo(click.style("✓ Database connection successful!", fg="green", bold=True))
-            return True
-    except SQLAlchemyError as e:
-        click.echo(click.style(f"✗ Database connection failed: {str(e)}", fg="red", bold=True), err=True)
-        return False
 
 
 @click.group()
@@ -160,7 +132,7 @@ def cli() -> None:
     help='Admin user password',
     callback=validate_pydantic_field(_AdminUserCreate, 'password')
 )
-def createadminuser(email: str, username: str, password: str) -> None:
+async def createadminuser(email: str, username: str, password: str) -> None:
     """
     Create an administrator user account.
 
@@ -178,7 +150,12 @@ def createadminuser(email: str, username: str, password: str) -> None:
     try:
         # Create user data model and pass to repository layer
         user_data = _AdminUserCreate(email=email, username=username, password=password)
-        user_db = _create_admin_user(user_data)
+
+        with get_db() as db:
+            user_repository = get_user_repository(db=db)
+            user_db = await user_repository.create_admin(
+                ** user_data.model_dump()
+            )
 
         click.echo(click.style(f"✓ Administrator user created successfully: {user_db}", fg="green"))
     except Exception as e:
@@ -187,7 +164,7 @@ def createadminuser(email: str, username: str, password: str) -> None:
 
 
 @cli.command()
-def createdb() -> None:
+async def initdb() -> None:
     """
     Create all database tables.
 
@@ -199,7 +176,7 @@ def createdb() -> None:
     for all models that inherit from the Base class.
     """
     try:
-        Base.metadata.create_all(bind=engine)
+        await init_db()
         click.echo(click.style("✓ Database tables created successfully", fg="green"))
     except SQLAlchemyError as e:
         click.echo(click.style(f"✗ Database creation failed: {e}", fg="red"), err=True)
@@ -207,41 +184,24 @@ def createdb() -> None:
 
 
 @cli.command()
-@click.option('--name', required=True, help='Database name')
-@click.option('--user', required=True, help='Database username')
-@click.option('--password', required=True, help='Database password')
-@click.option('--host', default='localhost', show_default=True, help='Database host')
-@click.option('--port', default='5432', show_default=True, help='Database port')
-@click.option(
-    '--engine',
-    default='postgresql',
-    show_default=True,
-    type=click.Choice(['postgresql', 'mysql', 'sqlite'], case_sensitive=False),
-    help='Database engine type'
-)
-def testdb(name: str, user: str, password: str, host: str, port: str, engine: str) -> None:
+async def testdb():
     """
     Test database connection.
 
-    This command attempts to establish a connection to the specified database
-    using the provided credentials and connection parameters.
+    This command attempts to establish a connection to the database
+    using the provided credentials. It verifies that the database is
+    accessible and that the credentials are valid.
 
-    Use cases:
-    • Verify database credentials before deployment
-    • Check network connectivity to database servers
-    • Validate database configuration
-    • Troubleshoot connection issues
-
-    The command will display a success message or detailed error information.
+    The command works as follows:
+        - If the connection is successful, a confirmation message is displayed.
+        - If the connection fails, an error message is displayed with details
     """
-    click.echo(f"Testing connection to {engine} database '{name}' on {host}:{port}...")
-
-    # Construct the database URL
-    database_url = f"{engine}://{user}:{password}@{host}:{port}/{name}"
-
-    # Test the connection and exit with appropriate status code
-    if not test_db_connection(database_url):
-        raise click.Abort()
+    try:
+        async with engine.connect():
+            await engine.execute("SELECT 1")
+            click.echo(click.style("✓ Database connection successful!", fg="green", bold=True))
+    except SQLAlchemyError as e:
+        click.echo(click.style(f"✗ Database connection failed: {str(e)}", fg="red", bold=True), err=True)
 
 
 if __name__ == '__main__':
