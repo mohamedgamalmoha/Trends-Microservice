@@ -1,5 +1,5 @@
 import os
-import logging
+from typing import Optional
 
 import dotenv
 from pydantic_settings import BaseSettings
@@ -7,14 +7,18 @@ from pydantic_settings import BaseSettings
 
 dotenv.load_dotenv('../../.env')
 
-logging.basicConfig(level=logging.INFO)
-
 
 class Settings(BaseSettings):
-    SQLALCHEMY_DATABASE_URL: str= os.environ.get('SQLALCHEMY_DATABASE_URL')
-    CELERY_BROKER_URL: str = os.environ.get('SQLALCHEMY_DATABASE_URL')
-    CELERY_RESULT_BACKEND: str = os.environ.get('CELERY_RESULT_BACKEND')
-    USER_AUTH_URL: str = os.environ.get('USER_AUTH_URL')
+    SQLALCHEMY_DATABASE_URL: Optional[str] = os.environ.get('SQLALCHEMY_DATABASE_URL', None)
+    
+    CELERY_BROKER_URL: Optional[str] = os.environ.get('SQLALCHEMY_DATABASE_URL', None)
+    CELERY_RESULT_BACKEND: Optional[str] = os.environ.get('CELERY_RESULT_BACKEND', None)
+    
+    USER_AUTH_URL: Optional[str] = os.environ.get('USER_AUTH_URL', None)
+
+    class Config:
+        frozen = True
+        case_sensitive = True
 
 
 settings = Settings()
