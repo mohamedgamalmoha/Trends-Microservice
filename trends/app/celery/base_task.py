@@ -1,12 +1,28 @@
 import traceback
 
 from celery import Task
+from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
 from shared_utils.schemas.status import TaskStatus
 from shared_utils.async_handler import AsyncHandler
 
+from app.repositories.task import get_task_repository
 from app.services.task import TaskService, get_task_service
-from app.schemas.task import TrendResponseQListItem, TrendResponse, TrendError, TrendTaskUpdate
+
+
+def get_task_service_from_db(db: AsyncSession) -> TaskService:
+    """
+    Get task service from db.
+   
+    Args:
+        - db (AsyncSession): Database session.
+    
+    Returns:
+        - TaskService: Task service instance.
+    """
+    task_repository = get_task_repository(db=db)
+    task_service = get_task_service(task_repository=task_repository)
+    return task_service
 
 
 class TrendTask(Task):
@@ -14,7 +30,7 @@ class TrendTask(Task):
     @staticmethod
     @AsyncHandler.with_async_generator(get_db)
     async def before_start(db, task_id, args, kwargs):
-        task_service = TaskService(db)
+        task_service = get_task_service_from_db(db)
         await task_service.update(
             id=task_id,
             status=TaskStatus.IN_PROGRESS
@@ -23,7 +39,7 @@ class TrendTask(Task):
     @staticmethod
     @AsyncHandler.with_async_generator(get_db)
     async def on_success(db, retval, task_id, args, kwargs):
-        task_service = TaskService(db)
+        task_service = get_task_service_from_db(db)
         await task_service.update(
             id=task_id,
             status=TaskStatus.COMPLETED,
@@ -33,7 +49,7 @@ class TrendTask(Task):
     @staticmethod
     @AsyncHandler.with_async_generator(get_db)
     async def on_failure(db, exc, task_id, args, kwargs, einfo):
-        task_service = TaskService(db)
+        task_service = get_task_service_from_db(db)
         await task_service.update(
             id=task_id,
             status=TaskStatus.FAILED,
@@ -46,7 +62,7 @@ class TrendTask(Task):
     @staticmethod
     @AsyncHandler.with_async_generator(get_db)
     async def on_retry(db, exc, task_id, args, kwargs, einfo):
-        task_service = TaskService(db)
+        task_service = get_task_service_from_db(db)
         await task_service.update(
             id=task_id,
             status=TaskStatus.RETRY,
