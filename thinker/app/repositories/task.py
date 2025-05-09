@@ -27,6 +27,9 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - Task: The created task instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await super().create(id=id, user_id=user_id, search_task_id=search_task_id, **other_fields)
 
@@ -51,6 +54,9 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - Task: The task instance if found.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await super().get_by_id(id=id)
 
@@ -64,9 +70,6 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - Task: The task instance if found.
-
-        Raises:
-            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await self.filter_by(id=id, user_id=user_id)
 
@@ -107,6 +110,9 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - Task: The updated task instance.
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await super().update(id=id, **kwargs)
 
@@ -137,6 +143,9 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - None
+
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await super().delete(id=id)
 
