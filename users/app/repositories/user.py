@@ -64,7 +64,8 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
             - ObjAlreadyExist: If a user with the same username or email already exists.
         """
         other_fields.setdefault('is_active', True)
-        other_fields.setdefault('ia_admin', True)
+        other_fields.setdefault('is_admin', True)
+
 
         return await self.create(email=email, username=username, password=password, **other_fields)
 
