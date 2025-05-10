@@ -66,6 +66,21 @@ def client(app):
         yield test_client
 
 
+@pytest_asyncio.fixture
+async def async_client(app):
+    from httpx import AsyncClient, ASGITransport
+    from shared_utils.db.session import init_db, drop_db, close_db
+    
+    await init_db()
+
+    base_url = "http://test"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as client:
+        yield client
+    
+    await drop_db()
+    await close_db()
+
+
 @pytest.fixture(scope="session")
 def rabbitmq_container():
     rabbitmq = CustomRabbitMqContainer(
