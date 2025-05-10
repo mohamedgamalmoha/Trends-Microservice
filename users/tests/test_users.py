@@ -1,3 +1,4 @@
+import pytest
 from tests.factories import UserCreateFactoryDict
 
 
@@ -174,6 +175,53 @@ def test_get_user_not_found(client):
     # Assert response
     assert response.status_code == 404
     assert data['detail'] == "User not found"
+
+
+@pytest.mark.asyncio
+async def test_get_user_list(async_client): 
+    from shared_utils.db.session import get_db
+    from app.repositories.user import get_user_repository
+    
+    user_data = UserCreateFactoryDict(is_admin=True)
+    user_data.pop("password_confirm")
+
+    db = await anext(get_db())
+
+    # Create an admin user
+    user_repository = get_user_repository(db=db)
+    await user_repository.create_admin(**user_data)
+    
+    # Make API request to get user token - use await with async client
+    response = await async_client.post(
+        "/api/v1/jwt/create/", 
+        json={"email": user_data["email"], "password": user_data["password"]}
+    )
+    data = response.json()
+    access_token = data['access_token']
+
+    # Make API request to get user list - use await with async client
+    response = await async_client.get(
+        "/api/v1/users/", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    data = response.json()
+
+    # Assert response
+    assert response.status_code == 200
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+    await db.close()  # Close the database connection
+
+
+def test_get_user_list_unauthorized(client):
+    # Make API request to get user list without authentication
+    response = client.get("/api/v1/users/")
+    data = response.json()
+
+    # Assert response
+    assert response.status_code == 403
+    assert data['detail'] == "Not authenticated"
 
 
 def test_update_user(client):   
