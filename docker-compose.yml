@@ -104,22 +104,19 @@ services:
             - trends-serv
             - redis
 
-    trends-flower-serv:
-        container_name: trends-flower-con
-        command: celery -A worker.celery flower --port=80 --url_prefix=flower
+    flower-serv:
+        image: mher/flower:2.0.0
+        container_name: flower-con
+        command: [ 'flower', '--broker=redis://redis:6379', '--port=5555']
         restart: always
-        build:
-            context: ./trends
-            dockerfile: Dockerfile
-        env_file:
-            - ./trends/.env
         volumes:
-            - ./trends:/app
+            - flower_data:/var/lib/data
         networks:
-            - global-network
             - internal-network
         depends_on:
             - redis
+        expose:
+            - '5555'
 
     nginx:
         image: nginx:1.27.4-alpine
@@ -132,7 +129,7 @@ services:
         depends_on:
             - users-serv
             - trends-serv
-            - trends-flower-serv
+            - flower-serv
 
     users-db-serv:
         image: postgres:17.4-alpine
@@ -214,6 +211,7 @@ volumes:
     users_data:
     trends_data:
     thinker_data:
+    flower_data:
     redis_data:
     rabbitmq_data:
     ollama_data:
