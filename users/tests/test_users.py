@@ -208,8 +208,8 @@ async def test_get_user_list(async_client):
 
     # Assert response
     assert response.status_code == 200
-    assert isinstance(data, list)
-    assert len(data) > 0
+    assert isinstance(data['results'], list)
+    assert len(data['results']) > 0
 
     await db.close()  # Close the database connection
 
