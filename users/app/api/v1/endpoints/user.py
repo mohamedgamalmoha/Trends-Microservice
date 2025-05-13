@@ -1,8 +1,9 @@
-from typing import List
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from shared_utils import messages
 from shared_utils.exceptions import ObjDoesNotExist, ObjAlreadyExist
+from shared_utils.pagination import PageNumberPaginationQueryParams, PageNumberPaginationResponse, PageNumberPaginator
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserRetrieve
@@ -126,10 +127,11 @@ async def get_user_route(
     return user
 
 
-@user_router.get('/', status_code=status.HTTP_200_OK, response_model=List[UserRetrieve])
+@user_router.get('/', status_code=status.HTTP_200_OK, response_model=PageNumberPaginationResponse[UserRetrieve])
 async def get_users_route(
         current_user: User = Depends(get_current_admin_user),
-        user_service: UserService = Depends(get_user_service)
+        query_params: Annotated[PageNumberPaginationQueryParams, Query()] = None,
+        user_service: UserService = Depends(get_user_service),
     ):
     """
     Retrieve a list of all users.
@@ -138,15 +140,20 @@ async def get_users_route(
 
     Args:
         - current_user (User): The authenticated user, validated as an admin, who is requesting the list.
+        - page_params (PageNumberPaginationQueryParams): Pagination parameters including page number and size.
         - user_service (UserService): Service used to retrieve all users from the database.
 
     Returns:
-        - List[UserRetrieve]: A list of all user profiles.
+        - PageNumberPaginationResponse[UserRetrieve]: A paginated response containing users` data.
 
     Raises:
         - HTTPException: 403 Forbidden if the requesting user is not an admin.
     """
-    return await user_service.get_all()
+    return await user_service.get_paginated(
+        paginator=PageNumberPaginator,
+        query_params=query_params,
+        response_schema=UserRetrieve
+    )
 
 
 @user_router.delete('/{user_id}/', status_code=status.HTTP_204_NO_CONTENT)
