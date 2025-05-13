@@ -105,7 +105,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         Raises:
             - ObjDoesNotExist: If no instance is found with the given email.
         """
-        result = await self.filter_by(
+        result = await self.get_by(
             email=email,
             is_active=True
         )
@@ -128,7 +128,7 @@ class UserModelRepository(SQLAlchemyModelRepository[User]):
         Raises:
             - ObjDoesNotExist: If no instance is found with the given username.
         """
-        result = await self.filter_by(
+        result = await self.get_by(
             username=username,
             is_active=True
         )
