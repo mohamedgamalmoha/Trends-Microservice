@@ -214,6 +214,67 @@ async def test_get_user_list(async_client):
     await db.close()  # Close the database connection
 
 
+@pytest.mark.asyncio
+async def test_get_user_list_pagination(async_client):
+    from shared_utils.db.session import get_db
+    from app.repositories.user import get_user_repository
+    
+    total_users = 15
+
+    db = await anext(get_db())
+    user_repository = get_user_repository(db=db)
+    
+    # Create default users 
+    for _ in range(total_users - 1):
+        user_data = UserCreateFactoryDict()
+        user_data.pop("password_confirm")
+        await user_repository.create(**user_data)
+
+    # Create admin user
+    admin_data = UserCreateFactoryDict(is_admin=True)
+    admin_data.pop("password_confirm")
+    await user_repository.create_admin(**admin_data)
+
+    # Make API request to get user token - use await with async client
+    response = await async_client.post(
+        "/api/v1/jwt/create/",
+        json={"email": admin_data["email"], "password": admin_data["password"]}
+    )
+    data = response.json()
+    access_token = data['access_token']
+    
+    # Get first page of users (default size to 10)
+    response = await async_client.get(
+        "/api/v1/users/", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert isinstance(data['results'], list)
+    assert len(data['results']) == 10
+    assert data['total_count'] == total_users
+    assert data['next_page'] == 2
+    assert data['previous_page'] is None
+
+    # Get second page of users
+    response = await async_client.get(
+        "/api/v1/users/", 
+        headers={"Authorization": f"Bearer {access_token}"},
+        params={'page': 2}
+    )
+    data = response.json()
+
+    assert response.status_code == 200
+    assert isinstance(data['results'], list)
+    assert len(data['results']) == total_users - 10
+    assert data['total_count'] == total_users
+    assert data['next_page'] is None
+    assert data['previous_page'] == 1
+
+    await db.close()  # Close the database connection
+
+
 def test_get_user_list_unauthorized(client):
     # Make API request to get user list without authentication
     response = client.get("/api/v1/users/")
