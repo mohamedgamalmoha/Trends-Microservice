@@ -1,11 +1,12 @@
-from typing import List
+from typing import Annotated
 
 from celery import uuid
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, Query, status
 from shared_utils import messages
 from shared_utils.schemas.user import User
 from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.api.deps.user import get_current_user, get_current_admin_user
+from shared_utils.pagination import PageNumberPaginationQueryParams, PageNumberPaginationResponse, PageNumberPaginator
 
 from app.services.task import TaskService, get_task_service
 from app.schemas.task import TaskCreate, TaskRetrieve
@@ -108,10 +109,11 @@ async def get_task_route(
     return db_task
 
 
-@task_router.get("/{user_id}/tasks/", response_model=List[TaskRetrieve])
+@task_router.get("/{user_id}/tasks/", response_model=PageNumberPaginationResponse[TaskRetrieve])
 async def get_user_tasks_route(
         user_id: int,
         current_user: User = Depends(get_current_user),
+        query_params: Annotated[PageNumberPaginationQueryParams, Query()] = None,
         task_service: TaskService = Depends(get_task_service)
     ):
     """
@@ -121,10 +123,11 @@ async def get_user_tasks_route(
     Args:
         - user_id (int): The ID of the user whose tasks to retrieve.
         - current_user (User): The current authenticated user.
+        - query_params (PageNumberPaginationQueryParams): Pagination parameters including page number and size.
         - task_service (TaskService): The task service instance.
 
     Returns:
-        - List[TaskRetrieve]: A list of tasks associated with the user.
+        - PageNumberPaginationResponse[TaskRetrieve]: A paginated response containing task` data associated with the user.
     """
     if not current_user.is_admin and user_id != current_user.id:
         raise HTTPException(
@@ -132,18 +135,22 @@ async def get_user_tasks_route(
             detail=messages.USER_FORBIDDEN_MESSAGE
         )
 
-    db_tasks = await task_service.filter_by_user_id(
+    db_tasks = await task_service.get_paginated(
+        paginator=PageNumberPaginator,
+        query_params=query_params,
+        response_schema=TaskRetrieve,
         user_id=user_id
     )
 
     return db_tasks
 
 
-@task_router.get("{user_id}/tasks/{search_task_id}/", response_model=List[TaskRetrieve])
+@task_router.get("{user_id}/tasks/{search_task_id}/", response_model=PageNumberPaginationResponse[TaskRetrieve])
 async def get_tasks_by_search_task_id_route(
         user_id: int,
         search_task_id: str,
         current_user: User = Depends(get_current_user),
+        query_params: Annotated[PageNumberPaginationQueryParams, Query()] = None,
         task_service: TaskService = Depends(get_task_service)
     ):
     """
@@ -154,10 +161,12 @@ async def get_tasks_by_search_task_id_route(
         - user_id (int): The ID of the user whose tasks to retrieve.
         - search_task_id (str): The ID of the search task to filter tasks by.
         - current_user (User): The current authenticated user.
+        - query_params (PageNumberPaginationQueryParams): Pagination parameters including page number and size.
         - task_service (TaskService): The task service instance.
 
     Returns:
-        - List[TaskRetrieve]: A list of tasks associated with the search task ID.
+        - PageNumberPaginationResponse[TaskRetrieve]: A paginated response containing task` data associated with
+          the search task ID.
 
     Raises:
         - HTTPException: If the user is not authorized to access the tasks or if no tasks are found.
@@ -169,7 +178,10 @@ async def get_tasks_by_search_task_id_route(
         )
 
     try:
-        db_tasks = await task_service.filter_by(
+        db_tasks = await task_service.get_paginated(
+            paginator=PageNumberPaginator,
+            query_params=query_params,
+            response_schema=TaskRetrieve,
             user_id=user_id,
             search_task_id=search_task_id,
         )
@@ -182,9 +194,11 @@ async def get_tasks_by_search_task_id_route(
     return db_tasks
 
 
-@task_router.get("/tasks/", response_model=List[TaskRetrieve])
+
+@task_router.get("/tasks/", response_model=PageNumberPaginationResponse[TaskRetrieve])
 async def get_tasks_route(
         current_user: User = Depends(get_current_admin_user),
+        query_params: Annotated[PageNumberPaginationQueryParams, Query()] = None,
         task_service: TaskService = Depends(get_task_service)
     ):
     """
@@ -193,13 +207,17 @@ async def get_tasks_route(
 
     Args:
         - current_user (User): The current authenticated admin user.
+        - query_params (PageNumberPaginationQueryParams): Pagination parameters including page number and size.
         - task_service (TaskService): The task service instance.
 
     Returns:
-        - List[TaskRetrieve]: A list of all tasks in the system.
+        - PageNumberPaginationResponse[TaskRetrieve]: A paginated response containing task` data.
     """
-    db_tasks = await task_service.get_all()
-    return db_tasks
+    return await task_service.get_paginated(
+        paginator=PageNumberPaginator,
+        query_params=query_params,
+        response_schema=TaskRetrieve
+    )
 
 
 @task_router.delete("/{user_id}/task/{task_id}/", response_model=None, status_code=status.HTTP_204_NO_CONTENT)
