@@ -1,6 +1,8 @@
-from typing import Sequence
+from typing import Generic, Sequence
 
 from fastapi import Depends
+from pydantic import BaseModel
+from shared_utils.pagination import Paginator
 
 from app.models.task import Task
 from app.repositories.task import TaskModelRepository, get_task_repository
@@ -91,6 +93,35 @@ class TaskService:
             - ObjDoesNotExist: If no instance is found with the given ID.
         """
         return await self.task_repository.get_by_user_id(id=id, user_id=user_id)
+
+    async def get_paginated[Schema: BaseModel](
+        self,
+        paginator: Paginator,
+        query_params: BaseModel,
+        response_schema: Schema,
+        **filters
+    ) -> Generic[Schema]:
+        """
+        Retrieve paginated results from the task repository based on provided parameters.
+
+        This method serves as a pass-through to the underlying task repository's get_paginated method,
+        forwarding all parameters and returning the paginated results in the specified schema format.
+
+        Args:
+            - paginator (Paginator): A paginator class responsible for applying pagination logic to the query and response.
+            - query_params (BaseModel): A Pydantic model containing query parameters for filtering.
+            - response_schema (Schema): A Pydantic model class that defines the structure of the response items.
+            - **filters: Additional keyword arguments that will be passed as filters to the repository.
+
+        Returns:
+            - Generic[Schema]: Paginated results that conform to the provided response schema.
+        """
+        return await self.task_repository.get_paginated(
+            paginator=paginator,
+            query_params=query_params,
+            response_schema=response_schema,
+            **filters
+        )
 
     async def update(self, id: str, **kwargs) -> Task:
         """
