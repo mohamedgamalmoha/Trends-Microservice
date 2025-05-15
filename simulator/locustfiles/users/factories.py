@@ -4,7 +4,6 @@ import string
 import faker
 import factory
 
-
 fake = faker.Faker()
 
 
@@ -18,11 +17,11 @@ class UserProvider(faker.providers.BaseProvider):
             # Add random characters if the username is too short
             username += random.choice(string.ascii_lowercase + string.digits)
         return username
-    
+
     def phonenumber(self, max_length=15):
         # Generate a random phone number
         phone_number = self.generator.phone_number()
-        
+
         # Ensure the phone number doesn't exceed the max_length
         while len(phone_number) > max_length:
             # Trim the phone number if it's too long

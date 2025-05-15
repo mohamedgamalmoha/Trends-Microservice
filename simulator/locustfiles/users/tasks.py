@@ -1,13 +1,12 @@
 import json
 
-from locust import FastHttpUser, SequentialTaskSet, task, between
+from locust import SequentialTaskSet, task
 
-from conf import settings
-from models import User
-from factories import UserCreateFactory, UserUpdateFactory
+from locustfiles.users.models import User
+from locustfiles.users.factories import UserCreateFactory, UserUpdateFactory
 
 
-class UserBehavior(SequentialTaskSet):
+class RegularUserTasks(SequentialTaskSet):
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -20,11 +19,11 @@ class UserBehavior(SequentialTaskSet):
     @task(1)
     def create(self):
         user_data = UserCreateFactory.build()
-        
+
         with self.client.post(
-            "/api/v1/users/",
-            json=user_data,
-            catch_response=True
+                "/api/v1/users/",
+                json=user_data,
+                catch_response=True
         ) as response:
             if response.status_code == 200:
                 try:
@@ -37,7 +36,8 @@ class UserBehavior(SequentialTaskSet):
                     response.failure("Create new user has invalid json schema")
                     self.interrupt()
             else:
-                response.failure(f"Invalid user creation with status:{response.status_code}, and response: {response.text}")
+                response.failure(
+                    f"Invalid user creation with status:{response.status_code}, and response: {response.text}")
                 self.interrupt()
 
     @task(2)
@@ -46,14 +46,14 @@ class UserBehavior(SequentialTaskSet):
         if self.current_user is None:
             self.interrupt()
             return
-            
+
         with self.client.post(
-            "/api/v1/jwt/create/",
-            json={
-                "email": self.current_user.email,
-                "password": self.current_user.password
-            },
-            catch_response=True
+                "/api/v1/jwt/create/",
+                json={
+                    "email": self.current_user.email,
+                    "password": self.current_user.password
+                },
+                catch_response=True
         ) as response:
             if response.status_code == 200:
                 try:
@@ -78,16 +78,17 @@ class UserBehavior(SequentialTaskSet):
         if self.auth_token is None:
             self.interrupt()
             return
-            
+
         with self.client.get(
-            "/api/v1/users/me/",
-            headers=self.get_headers(),
-            catch_response=True
+                "/api/v1/users/me/",
+                headers=self.get_headers(),
+                catch_response=True
         ) as response:
             if response.status_code == 200:
                 response.success()
             else:
-                response.failure(f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
+                response.failure(
+                    f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
                 self.interrupt()
 
     @task(4)
@@ -125,14 +126,6 @@ class UserBehavior(SequentialTaskSet):
                         setattr(self.current_user, k, v)
                 response.success()
             else:
-                response.failure(f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
+                response.failure(
+                    f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
                 self.interrupt()
-
-
-class RegularUser(FastHttpUser):
-    host = settings.USER_SERVICE_URL
-    tasks = [UserBehavior]
-    wait_time = between(
-        min_wait=settings.MIN_WAITING_TIME,
-        max_wait=settings.MAX_WAITING_TIME
-    )
