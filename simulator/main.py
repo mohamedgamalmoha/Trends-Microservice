@@ -4,7 +4,7 @@ from locust import FastHttpUser, SequentialTaskSet, task, between
 
 from conf import settings
 from models import User
-from factories import UserCreateFactory
+from factories import UserCreateFactory, UserUpdateFactory
 
 
 class UserBehavior(SequentialTaskSet):
@@ -85,6 +85,44 @@ class UserBehavior(SequentialTaskSet):
             catch_response=True
         ) as response:
             if response.status_code == 200:
+                response.success()
+            else:
+                response.failure(f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
+                self.interrupt()
+
+    @task(4)
+    def get_by_id(self):
+        # Ensure auth_token is not None before proceeding
+        if self.auth_token is None:
+            self.interrupt()
+            return
+
+        with self.client.get(
+                f"/api/v1/users/{self.current_user.id}/",
+                headers=self.get_headers(),
+                catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            else:
+                response.failure(
+                    f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
+                self.interrupt()
+
+    @task(5)
+    def update(self):
+        update_data = UserUpdateFactory.build()
+        with self.client.put(
+                f"/api/v1/users/{self.current_user.id}/",
+                headers=self.get_headers(),
+                json=update_data,
+                catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response_data = json.loads(response.text)
+                for k, v in response_data:
+                    if hasattr(self.current_user, k):
+                        setattr(self.current_user, k, v)
                 response.success()
             else:
                 response.failure(f"Invalid get my account with status: {response.status_code}, and with response: {response.text}")
