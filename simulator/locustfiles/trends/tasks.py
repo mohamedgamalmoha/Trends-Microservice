@@ -1,0 +1,95 @@
+import json
+
+from locust import task
+
+from locustfiles.users.tasks import RegularUserTasks
+from locustfiles.trends.models import Trends
+from locustfiles.trends.factories import TrendsCreateFactory
+
+
+class TrendsTasks(RegularUserTasks):
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        current_trends: Trends = None
+
+    @task(6)
+    def create_trends(self):
+        trends_data = TrendsCreateFactory.build()
+        with self.client.post(
+                "/api/v1/trends/",
+                headers=self.get_headers(),
+                json=trends_data,
+                catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                try:
+                    response_data = json.loads(response.text)
+                    trends_data.update(response_data)
+                    self.current_trends = Trends(**trends_data)
+                    response.success()
+                except json.JSONDecodeError:
+                    response.failure("Create new trends has invalid json schema")
+                    self.interrupt()
+            else:
+                response.failure(
+                    f"Invalid trends creation with status:{response.status_code}, and response: {response.text}"
+                )
+                self.interrupt()
+
+    @task(7)
+    def get_trends_by_id(self):
+        if self.current_trends is None:
+            self.interrupt()
+            return
+
+        with self.client.get(
+                f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
+                headers=self.get_headers(),
+                catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            else:
+                response.failure(
+                    f"Invalid get trends by id with status: {response.status_code}, and with response: {response.text}"
+                )
+                self.interrupt()
+
+    @task(8)
+    def get_list_trends(self):
+        if self.current_trends is None:
+            self.interrupt()
+            return
+
+        with self.client.get(
+                f"/api/v1/trends/{self.current_trends.user_id}/",
+                headers=self.get_headers(),
+                catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            else:
+                response.failure(
+                    f"Invalid get my account with status: {response.status_code}, and with response: {response.text}"
+                )
+                self.interrupt()
+
+    @task(9)
+    def delete_trends(self):
+        if self.current_trends is None:
+            self.interrupt()
+            return
+
+        with self.client.delete(
+                f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
+                headers=self.get_headers(),
+                catch_response=True
+        ) as response:
+            if response.status_code == 204:
+                response.success()
+            else:
+                response.failure(
+                    f"Invalid delete trends with status: {response.status_code}, and with response: {response.text}"
+                )
+                self.interrupt()
