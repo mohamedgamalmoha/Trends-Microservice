@@ -2,8 +2,8 @@ import json
 
 from locust import SequentialTaskSet, task
 
-from locustfiles.users.models import User
-from locustfiles.users.factories import UserCreateFactory, UserUpdateFactory
+from locustfiles.comman.user import User, UserCreateFactory
+from locustfiles.users.factories import UserUpdateFactory
 
 
 class RegularUserTasks(SequentialTaskSet):
