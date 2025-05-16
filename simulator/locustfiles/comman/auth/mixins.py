@@ -12,6 +12,8 @@ class AuthTaskMixin:
         self.auth_manage: AuthManager = AuthManager(
             ** self.get_auth_manager_init_keyword()
         )
+        self.current_user: User = None
+        self.auth_token: str = None
 
     def get_auth_manager_init_keyword(self) -> dict:
         return {}
