@@ -15,4 +15,4 @@ app = FastAPI(
 app.include_router(v1_api_router, prefix='/api')
 
 
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app, endpoint='/api/users/metrics')

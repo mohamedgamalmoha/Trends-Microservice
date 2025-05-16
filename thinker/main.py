@@ -17,4 +17,4 @@ app.include_router(task_router, prefix='/api/think')
 app.include_router(health_router, prefix='/api/think')
 
 
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app, endpoint='/api/think/metrics')
