@@ -1,24 +1,24 @@
 import json
 
-from locust import task
+from locust import SequentialTaskSet, task
 
-from locustfiles.users.tasks import RegularUserTasks
+from locustfiles.comman.auth import AuthTaskMixin
 from locustfiles.thinker.models import Thinker
 from locustfiles.thinker.factories import ThinkerCreateFactory
 
 
-class ThinkerTasks(RegularUserTasks):
+class ThinkerTasks(AuthTaskMixin, SequentialTaskSet):
 
     def __init__(self, parent):
         super().__init__(parent)
         current_thinker: Thinker = None
 
-    @task(6)
+    @task(2)
     def create_thinker(self):
         thinker_data = ThinkerCreateFactory.build()
         with self.client.post(
                 "/api/v1/thinker/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 json=thinker_data,
                 catch_response=True
         ) as response:
@@ -37,7 +37,7 @@ class ThinkerTasks(RegularUserTasks):
                 )
                 self.interrupt()
 
-    @task(7)
+    @task(5)
     def get_thinker_by_id(self):
         if self.current_thinker is None:
             self.interrupt()
@@ -45,7 +45,7 @@ class ThinkerTasks(RegularUserTasks):
 
         with self.client.get(
                 f"/api/v1/thinker/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -64,7 +64,7 @@ class ThinkerTasks(RegularUserTasks):
 
         with self.client.get(
                 f"/api/v1/thinker/{self.current_thinker.user_id}/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -75,7 +75,7 @@ class ThinkerTasks(RegularUserTasks):
                 )
                 self.interrupt()
 
-    @task(9)
+    @task(1)
     def delete_thinker(self):
         if self.current_thinker is None:
             self.interrupt()
@@ -83,7 +83,7 @@ class ThinkerTasks(RegularUserTasks):
 
         with self.client.delete(
                 f"/api/v1/thinker/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 204:

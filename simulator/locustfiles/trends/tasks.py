@@ -1,24 +1,24 @@
 import json
 
-from locust import task
+from locust import SequentialTaskSet, task
 
-from locustfiles.users.tasks import RegularUserTasks
+from locustfiles.comman.auth import AuthTaskMixin
 from locustfiles.trends.models import Trends
 from locustfiles.trends.factories import TrendsCreateFactory
 
 
-class TrendsTasks(RegularUserTasks):
+class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
 
     def __init__(self, parent):
         super().__init__(parent)
         current_trends: Trends = None
 
-    @task(6)
+    @task(2)
     def create_trends(self):
         trends_data = TrendsCreateFactory.build()
         with self.client.post(
                 "/api/v1/trends/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 json=trends_data,
                 catch_response=True
         ) as response:
@@ -37,7 +37,7 @@ class TrendsTasks(RegularUserTasks):
                 )
                 self.interrupt()
 
-    @task(7)
+    @task(5)
     def get_trends_by_id(self):
         if self.current_trends is None:
             self.interrupt()
@@ -45,7 +45,7 @@ class TrendsTasks(RegularUserTasks):
 
         with self.client.get(
                 f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -64,7 +64,7 @@ class TrendsTasks(RegularUserTasks):
 
         with self.client.get(
                 f"/api/v1/trends/{self.current_trends.user_id}/",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 200:
@@ -75,7 +75,7 @@ class TrendsTasks(RegularUserTasks):
                 )
                 self.interrupt()
 
-    @task(9)
+    @task(1)
     def delete_trends(self):
         if self.current_trends is None:
             self.interrupt()
@@ -83,7 +83,7 @@ class TrendsTasks(RegularUserTasks):
 
         with self.client.delete(
                 f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
-                headers=self.get_headers(),
+                headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
             if response.status_code == 204:
