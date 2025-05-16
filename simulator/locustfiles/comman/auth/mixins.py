@@ -9,7 +9,7 @@ class AuthTaskMixin:
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.auth_manage: AuthManager = AuthManager(
+        self.auth_manager: AuthManager = AuthManager(
             ** self.get_auth_manager_init_keyword()
         )
         self.current_user: User = None
