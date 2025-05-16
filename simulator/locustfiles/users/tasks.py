@@ -7,7 +7,7 @@ from locustfiles.comman.auth import AuthTaskMixin
 from locustfiles.users.factories import UserUpdateFactory
 
 
-class RegularUserTasks(AuthTaskMixin, SequentialTaskSet):
+class UserTasks(AuthTaskMixin, SequentialTaskSet):
 
     def __init__(self, parent):
         super().__init__(parent)
