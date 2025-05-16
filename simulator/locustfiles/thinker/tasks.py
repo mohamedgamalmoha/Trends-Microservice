@@ -7,7 +7,7 @@ from locustfiles.thinker.models import Thinker
 from locustfiles.thinker.factories import ThinkerCreateFactory
 
 
-class TrendsTasks(RegularUserTasks):
+class ThinkerTasks(RegularUserTasks):
 
     def __init__(self, parent):
         super().__init__(parent)
