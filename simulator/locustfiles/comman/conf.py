@@ -5,7 +5,7 @@ import dotenv
 from pydantic_settings import BaseSettings
 
 
-dotenv.load_dotenv('../.env')
+dotenv.load_dotenv('../../.env')
 
 
 class Settings(BaseSettings):
