@@ -6,14 +6,15 @@ import factory
 from locust.clients import HttpSession
 from requests.exceptions import RequestException
 
+from locustfiles.comman.conf import settings
 from locustfiles.comman.user import User, UserCreateFactory
 
 
 @dataclass
 class AuthManager:
-    user_create_url_path: str = "/api/v1/users/"
-    user_auth_url_path: str = "/api/v1/jwt/create/"
-    user_auth_token_keyword: str = "token"
+    user_create_url_path: str = settings.USER_SERVICE_CREATE_PATH
+    user_auth_url_path: str = settings.USER_SERVICE_AUTH_PATH
+    user_auth_token_identifier: str = settings.USER_SERVICE_AUTH_TOKEN_IDENTIFIER
     user_create_factory: Type[factory.Factory] = UserCreateFactory
 
     @staticmethod
@@ -70,9 +71,9 @@ class AuthManager:
                 if self.user_create_factory not in response_data:
                     response.failure("Token keyword not found in response")
                     raise RequestException(
-                        f"Token keyword '{self.user_auth_token_keyword}' not found in response: {response.text}"
+                        f"Token keyword '{self.user_auth_token_identifier}' not found in response: {response.text}"
                     )
-                return response_data[self.user_auth_token_keyword]
+                return response_data[self.user_auth_token_identifier]
 
             response.failure(f"User authentication failed with status: {response.status_code}")
             raise RequestException(
