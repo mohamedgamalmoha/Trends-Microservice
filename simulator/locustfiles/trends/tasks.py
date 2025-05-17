@@ -17,7 +17,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
     def create_trends(self):
         trends_data = TrendsCreateFactory.build()
         with self.client.post(
-                "/api/v1/trends/",
+                "/api/v1/search/",
                 headers=self.get_auth_headers(),
                 json=trends_data,
                 catch_response=True
@@ -44,7 +44,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
+                f"/api/v1/search/{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -63,7 +63,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/trends/{self.current_trends.user_id}/",
+                f"/api/v1/search/{self.current_trends.user_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -82,7 +82,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.delete(
-                f"/api/v1/trends/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
+                f"/api/v1/search/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
