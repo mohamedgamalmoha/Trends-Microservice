@@ -6,15 +6,13 @@ import factory
 from locust.clients import HttpSession
 from requests.exceptions import RequestException
 
-from locustfiles.comman.conf import settings
 from locustfiles.comman.user import User, UserCreateFactory
 
 
 @dataclass
 class AuthManager:
-    user_host: str = settings.USER_SERVICE_URL
-    user_create_url_prefix: str = "/api/v1/users/"
-    user_auth_url_prefix: str = "/api/v1/jwt/create/"
+    user_create_url_path: str = "/api/v1/users/"
+    user_auth_url_path: str = "/api/v1/jwt/create/"
     user_auth_token_keyword: str = "token"
     user_create_factory: Type[factory.Factory] = UserCreateFactory
 
@@ -22,12 +20,11 @@ class AuthManager:
     def get_auth_headers(auth_token: str) -> dict:
         return {"Authorization": f"Bearer {auth_token}"}
 
-    def get_full_url_path(self, prefix: str) -> str:
-        return f"{self.user_host}{prefix}"
-
     def get_user_create_data(self, **fields) -> dict:
         factory_class = self.user_create_factory
-        user_data = factory_class.build()
+        user_data = factory_class.build(
+            ** fields
+        )
         return user_data
 
     @staticmethod
@@ -39,10 +36,9 @@ class AuthManager:
 
     def create_user(self, client: HttpSession, **fields) -> User:
         user_data = self.get_user_create_data(**fields)
-        full_path = self.get_full_url_path(prefix=self.user_create_url_prefix)
 
         with client.post(
-                url=full_path,
+                url=self.user_create_url_path,
                 json=user_data,
                 catch_response=True
         ) as response:
@@ -62,10 +58,9 @@ class AuthManager:
 
     def auth_user(self, client: HttpSession, user: User) -> str:
         auth_data = self.get_user_auth_data(user=user)
-        full_path = self.get_full_url_path(prefix=self.user_auth_url_prefix)
 
         with client.post(
-                url=full_path,
+                url=self.user_auth_url_path,
                 json=auth_data,
                 catch_response=True
         ) as response:
