@@ -17,7 +17,7 @@ class ThinkerTasks(AuthTaskMixin, SequentialTaskSet):
     def create_thinker(self):
         thinker_data = ThinkerCreateFactory.build()
         with self.client.post(
-                "/api/v1/thinker/",
+                "/api/v1/think/",
                 headers=self.get_auth_headers(),
                 json=thinker_data,
                 catch_response=True
@@ -44,7 +44,7 @@ class ThinkerTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/thinker/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}/",
+                f"/api/v1/think/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -63,7 +63,7 @@ class ThinkerTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/thinker/{self.current_thinker.user_id}/",
+                f"/api/v1/think/{self.current_thinker.user_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -82,7 +82,7 @@ class ThinkerTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.delete(
-                f"/api/v1/thinker/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}",
+                f"/api/v1/think/{self.current_thinker.user_id}/task/{self.current_thinker.task_id}",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
