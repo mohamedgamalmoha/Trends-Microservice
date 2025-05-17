@@ -2,12 +2,14 @@ import json
 
 from locust import SequentialTaskSet, task
 
+from locustfiles.comman.conf import settings
 from locustfiles.comman.auth import AuthTaskMixin
 from locustfiles.think.models import Think
 from locustfiles.think.factories import ThinkCreateFactory
 
 
 class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
+    think_url_path: str = settings.THINK_SERVICE_PATH
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -17,7 +19,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
     def create_think(self):
         thinker_data = ThinkCreateFactory.build()
         with self.client.post(
-                "/api/v1/think/",
+                self.think_url_path,
                 headers=self.get_auth_headers(),
                 json=thinker_data,
                 catch_response=True
@@ -44,7 +46,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/think/{self.current_think.user_id}/task/{self.current_think.task_id}/",
+                f"{self.think_url_path}{self.current_think.user_id}/task/{self.current_think.task_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -63,7 +65,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/think/{self.current_think.user_id}/",
+                f"{self.think_url_path}{self.current_think.user_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -82,7 +84,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.delete(
-                f"/api/v1/think/{self.current_think.user_id}/task/{self.current_think.task_id}",
+                f"{self.think_url_path}{self.current_think.user_id}/task/{self.current_think.task_id}",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:

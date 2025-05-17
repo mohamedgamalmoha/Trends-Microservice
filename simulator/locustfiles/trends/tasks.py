@@ -2,12 +2,14 @@ import json
 
 from locust import SequentialTaskSet, task
 
+from locustfiles.comman.conf import settings
 from locustfiles.comman.auth import AuthTaskMixin
 from locustfiles.trends.models import Trends
 from locustfiles.trends.factories import TrendsCreateFactory
 
 
 class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
+    trends_url_path: str = settings.TRENDS_SERVICE_PATH
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -17,7 +19,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
     def create_trends(self):
         trends_data = TrendsCreateFactory.build()
         with self.client.post(
-                "/api/v1/search/",
+                self.trends_url_path,
                 headers=self.get_auth_headers(),
                 json=trends_data,
                 catch_response=True
@@ -44,7 +46,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/search/{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
+                f"{self.trends_url_path}{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -63,7 +65,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"/api/v1/search/{self.current_trends.user_id}/",
+                f"{self.trends_url_path}{self.current_trends.user_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -82,7 +84,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.delete(
-                f"/api/v1/search/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
+                f"{self.trends_url_path}/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
