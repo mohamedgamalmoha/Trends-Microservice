@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Thinker:
+class Think:
     task_id: uuid.UUID
     user_id: int
     search_task_id: Optional[uuid.UUID]
