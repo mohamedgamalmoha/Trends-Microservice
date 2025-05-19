@@ -18,7 +18,7 @@ task_router = APIRouter(
 )
 
 
-@task_router.post('/', response_model=TaskRetrieve)
+@task_router.post('/task/', response_model=TaskRetrieve)
 async def create_task_route(
         task: TaskCreate,
         current_user: User = Depends(get_current_user),
