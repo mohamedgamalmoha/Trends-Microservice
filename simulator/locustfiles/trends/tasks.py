@@ -13,17 +13,19 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
 
     def __init__(self, parent):
         super().__init__(parent)
-        current_trends: Trends = None
+        self.current_trends: Trends = None
 
     @task(2)
     def create_trends(self):
-        trends_data = TrendsCreateFactory.build()
+        trends_data = TrendsCreateFactory.build(user_id=self.current_user.id)
+
         with self.client.post(
-                self.trends_url_path,
+                f"{self.trends_url_path}/task/",
                 headers=self.get_auth_headers(),
                 json=trends_data,
                 catch_response=True
         ) as response:
+
             if response.status_code == 200:
                 try:
                     response_data = json.loads(response.text)
