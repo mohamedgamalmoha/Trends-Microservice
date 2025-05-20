@@ -14,6 +14,7 @@ from app.celery.tasks import think_task
 
 
 task_router = APIRouter(
+    prefix='/think',
     tags=['question']
 )
 

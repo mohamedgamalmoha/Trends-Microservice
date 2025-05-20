@@ -12,7 +12,7 @@ app = FastAPI(
     openapi_url='/api/search/openapi.json'
 )
 
-app.include_router(v1_api_router, prefix='/api/search')
+app.include_router(v1_api_router, prefix='/api')
 
 
 Instrumentator().instrument(app).expose(app, endpoint='/api/search/metrics')

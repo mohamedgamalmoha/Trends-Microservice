@@ -14,6 +14,7 @@ from app.celery.tasks import trends_search_task
 
 
 task_router = APIRouter(
+    prefix='/search',
     tags = ['search']
 )
 
