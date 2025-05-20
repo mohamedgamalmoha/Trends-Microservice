@@ -44,7 +44,7 @@ class AuthManager:
                 catch_response=True
         ) as response:
 
-            if response.status_code == 200:
+            if response.status_code == 201:
                 response_data = json.loads(response.text)
                 user_data.update(response_data)
                 user_data.pop('password_confirm', None)
@@ -68,7 +68,7 @@ class AuthManager:
 
             if response.status_code == 200:
                 response_data = json.loads(response.text)
-                if self.user_create_factory not in response_data:
+                if self.user_auth_token_identifier not in response_data:
                     response.failure("Token keyword not found in response")
                     raise RequestException(
                         f"Token keyword '{self.user_auth_token_identifier}' not found in response: {response.text}"
