@@ -54,13 +54,14 @@ fake.add_provider(TrendsProvider)
 
 
 class TrendsCreateFactory(factory.Factory):
+    user_id = factory.LazyFunction(lambda: random.randint(1, 100))
     q = factory.LazyFunction(lambda : fake.search_query(size=2))
     geo = factory.LazyFunction(lambda: fake.country_code())
     time = factory.LazyFunction(lambda: fake.duration())
     cat = factory.LazyFunction(lambda: random.randint(0, 100))
     gprop = factory.LazyFunction(lambda: fake.property_enum())
     tz = factory.LazyFunction(lambda: random.randint(-12, 12))
-    schedule_at = factory.LazyFunction(datetime.now)
+    schedule_at = factory.LazyFunction(lambda: datetime.now().isoformat())
 
     class Meta:
         model = dict
