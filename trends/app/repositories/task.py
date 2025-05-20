@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
-from shared_utils.exceptions import ObjAlreadyExist
+from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.repository.sqlalchemy import SQLAlchemyModelRepository
 
 from app.models.task import Task
@@ -29,11 +29,12 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
         Raises:
             - ObjAlreadyExist: If a task with the same id exists.
         """
-        is_task_exist = await self.get_by_id(id=id)
-        if is_task_exist:
-            raise ObjAlreadyExist()
-
-        return await super().create(id=id, user_id=user_id, q=q, **other_fields)
+        try:
+            await self.get_by_id(id=id)
+        except ObjDoesNotExist:
+            return await super().create(id=id, user_id=user_id, q=q, **other_fields)
+        
+        raise ObjDoesNotExist
 
     async def get_by_id(self, id: str) -> Task:
         """
