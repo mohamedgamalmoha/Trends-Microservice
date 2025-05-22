@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import Optional
 from datetime import datetime
 
@@ -54,7 +55,7 @@ class ThinkError(pydantic.BaseModel):
 
 
 class TaskRetrieve(TaskCreate):
-    task_id: str
+    task_id: UUID = pydantic.Field(alias="id")
 
     status: TaskStatus
 
