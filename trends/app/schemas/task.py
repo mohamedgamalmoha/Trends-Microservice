@@ -1,4 +1,6 @@
 import enum
+from uuid import UUID
+
 from datetime import datetime
 from typing import Optional, List, Literal, Any
 
@@ -122,7 +124,7 @@ class TrendError(pydantic.BaseModel):
 
 
 class TaskRetrieve(TaskCreate):
-    task_id: str
+    task_id: UUID = pydantic.Field(alias="id")
     status: TaskStatus
     result_data: Optional[List[TrendResponse]] = None
     error: Optional[str] = None
