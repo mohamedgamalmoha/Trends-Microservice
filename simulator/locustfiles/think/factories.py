@@ -13,7 +13,7 @@ class ThinkCreateFactory(factory.Factory):
     context = factory.LazyFunction(lambda: fake.paragraph(nb_sentences=5, variable_nb_sentences=True))
     temperature = factory.LazyFunction(lambda: round(random.uniform(0.1, 1.0), 1))
     max_tokens = factory.LazyFunction(lambda: random.choice([100, 150, 200, 250, 300, 500]))
-    schedule_at = factory.LazyFunction(datetime.now)
+    schedule_at = factory.LazyFunction(lambda: datetime.now().isoformat())
 
     class Meta:
         model = dict
