@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import Annotated
 
 from celery import uuid
@@ -60,7 +61,7 @@ async def create_task_route(
 @task_router.get('/{user_id}/task/{task_id}/', response_model=TaskRetrieve)
 async def get_task_route(
         user_id: int,
-        task_id: str,
+        task_id: UUID,
         current_user: User = Depends(get_current_user),
         task_service: TaskService = Depends(get_task_service)
     ):
