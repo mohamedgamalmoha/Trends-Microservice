@@ -55,7 +55,7 @@ class ThinkError(pydantic.BaseModel):
 
 
 class TaskRetrieve(TaskCreate):
-    task_id: UUID = pydantic.Field(alias="id")
+    task_id: UUID = pydantic.Field(alias="id", serialization_alias="task_id")
 
     status: TaskStatus
 
