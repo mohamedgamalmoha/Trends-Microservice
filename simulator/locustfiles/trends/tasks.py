@@ -48,7 +48,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"{self.trends_url_path}{self.current_trends.user_id}/task/{self.current_trends.task_id}/",
+                f"{self.trends_url_path}{self.current_user.id}/task/{self.current_trends.task_id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -67,7 +67,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"{self.trends_url_path}{self.current_trends.user_id}/",
+                f"{self.trends_url_path}{self.current_user.id}/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
@@ -86,7 +86,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.delete(
-                f"{self.trends_url_path}/{self.current_trends.user_id}/task/{self.current_trends.task_id}",
+                f"{self.trends_url_path}/{self.current_user.id}/task/{self.current_trends.task_id}",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
