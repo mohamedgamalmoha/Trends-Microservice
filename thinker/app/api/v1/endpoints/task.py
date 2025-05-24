@@ -259,4 +259,4 @@ async def delete_task_route(
             detail=messages.TASK_NOT_FOUND_MESSAGE
         )
 
-    await task_service.delete(task_id=db_task.id)
+    await task_service.delete(id=db_task.id)
