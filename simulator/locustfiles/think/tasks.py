@@ -19,7 +19,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
     def create_think(self):
         thinker_data = ThinkCreateFactory.build(user_id=self.current_user.id)
         with self.client.post(
-                self.think_url_path,
+                f"{self.think_url_path}task/",
                 headers=self.get_auth_headers(),
                 json=thinker_data,
                 catch_response=True
@@ -65,7 +65,7 @@ class ThinkTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"{self.think_url_path}{self.current_user.id}/",
+                f"{self.think_url_path}{self.current_user.id}/tasks/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
