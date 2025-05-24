@@ -3,6 +3,7 @@ from typing import Sequence
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared_utils.db.session import get_db
+from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.repository.sqlalchemy import SQLAlchemyModelRepository
 
 from app.models.task import Task
@@ -70,8 +71,16 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
 
         Returns:
             - Task: The task instance if found.
+        
+        Raises:
+            - ObjDoesNotExist: If no instance is found with the given ID.
         """
-        return await self.filter_by(id=id, user_id=user_id)
+        results = await self.filter_by(id=id, user_id=user_id)
+        
+        if not results:
+            raise ObjDoesNotExist
+        
+        return results[0]
 
     async def get_by_search_task_id(self, id: str, search_task_id: str) -> Task:
         """
