@@ -65,7 +65,12 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
         Raises:
             - ObjDoesNotExist: If no instance is found with the given ID.
         """
-        await self.filter_by(id=id, user_id=user_id)
+        results = await self.filter_by(id=id, user_id=user_id)
+
+        if not results:
+            raise ObjDoesNotExist
+        
+        return results[0]
 
     async def update(self, id: str, **kwargs) -> Task:
         """
