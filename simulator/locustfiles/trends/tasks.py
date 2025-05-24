@@ -67,7 +67,7 @@ class TrendsTasks(AuthTaskMixin, SequentialTaskSet):
             return
 
         with self.client.get(
-                f"{self.trends_url_path}{self.current_user.id}/",
+                f"{self.trends_url_path}{self.current_user.id}/tasks/",
                 headers=self.get_auth_headers(),
                 catch_response=True
         ) as response:
