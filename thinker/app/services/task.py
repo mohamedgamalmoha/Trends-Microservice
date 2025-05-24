@@ -24,14 +24,14 @@ class TaskService:
         """
         self.task_repository = task_repository
 
-    async def create(self, id: str, user_id: str, q: str, **other_fields)  -> Task:
+    async def create(self, id: str, user_id: str, question: str, **other_fields)  -> Task:
         """
         Create a new task.
 
         Args:
             - id (str): Task id to create.
             - username (str): Task user_id to create.
-            - q (str): Task q to create.
+            - question (str): Task q to create.
             - **other_fields: Remaining fields to create.
 
         Returns:
@@ -40,7 +40,7 @@ class TaskService:
         Raises:
             - ObjAlreadyExist: If a task with the same id exists.
         """
-        return await self.task_repository.create(id=id, user_id=user_id, q=q, **other_fields)
+        return await self.task_repository.create(id=id, user_id=user_id, question=question, **other_fields)
 
     async def get_all(self) -> Sequence[Task]:
         """
