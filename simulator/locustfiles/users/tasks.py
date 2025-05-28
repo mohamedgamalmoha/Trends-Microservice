@@ -64,7 +64,7 @@ class UserTasks(AuthTaskMixin, SequentialTaskSet):
         ) as response:
             if response.status_code == 200:
                 response_data = json.loads(response.text)
-                for k, v in response_data:
+                for k, v in response_data.items():
                     if hasattr(self.current_user, k):
                         setattr(self.current_user, k, v)
                 response.success()
