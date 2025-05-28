@@ -148,6 +148,30 @@ services:
             - trends-serv
             - flower-serv
 
+    prometheus:
+        image: prom/prometheus:latest
+        restart: unless-stopped
+        container_name: prometheus
+        ports:
+            - 9090:9090
+        volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+        networks:
+            - global-network
+
+    grafana:
+        image: grafana/grafana
+        container_name: grafana
+        restart: unless-stopped
+        depends_on:
+            - prometheus
+        ports:
+            - 3000:3000
+        networks:
+            - global-network
+        volumes:
+            - ./grafana/provisioning:/etc/grafana/provisioning
+
     users-db-serv:
         image: postgres:17.4-alpine
         container_name: users-db-con
