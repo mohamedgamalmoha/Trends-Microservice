@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+
+
+scrape_configs:
+ 
+  - job_name: 'users-serv'
+    scrape_interval: 5s
+    metrics_path: '/api/users/metrics'
+    static_configs:
+      - targets: ['nginx:80']
+ 
+  - job_name: 'thinker-serv'
+    scrape_interval: 5s
+    metrics_path: '/api/think/metrics'
+    static_configs:
+      - targets: ['nginx:80']
+ 
+  - job_name: 'trends-serv'
+    scrape_interval: 5s
+    metrics_path: '/api/search/metrics'
+    static_configs:
+      - targets: ['nginx:80']
