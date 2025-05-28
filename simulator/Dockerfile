@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . /app
 
-CMD ["locust", "-f", "locustfile.py", "--web-port", "8080"]
+CMD ["locust", "-f", "locustfile.py"]
