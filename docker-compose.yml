@@ -118,22 +118,22 @@ services:
         expose:
             - '5555'
 
-    locust-serv:
-        container_name: locust-con
+    simulator-serv:
+        container_name: simulator-con
         restart: always
         build:
             context: ./simulator
             dockerfile: Dockerfile
         env_file:
             - ./simulator/.env
+        ports:
+            - '8089:8089'
+        networks:
+            - global-network
         volumes:
             - ./simulator:/app
-        networks:
-            - internal-network
         depends_on:
-            - users-serv
-        ports:
-            - '8080:8080'
+            - nginx
     
     nginx:
         image: nginx:1.27.4-alpine
