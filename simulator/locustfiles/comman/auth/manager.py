@@ -1,4 +1,6 @@
 import json
+import random
+import string
 from typing import Type
 from dataclasses import dataclass
 
@@ -8,6 +10,9 @@ from requests.exceptions import RequestException
 
 from locustfiles.comman.conf import settings
 from locustfiles.comman.user import User, UserCreateFactory
+
+
+generate_radom_string = lambda length: ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 @dataclass
@@ -35,6 +40,18 @@ class AuthManager:
             "password": user.password
         }
 
+    @staticmethod
+    def resolve_user_data_conflicts(**fields) -> dict:
+        email, username = fields['email'], fields['username']
+        
+        new_email = f"{email.split('@')[0]}_{generate_radom_string(5)}@{email.split('@')[1]}"
+        new_username = f"{username}_{generate_radom_string(5)}"
+        
+        fields['email'] = new_email
+        fields['username'] = new_username
+        
+        return fields
+
     def create_user(self, client: HttpSession, **fields) -> User:
         user_data = self.get_user_create_data(**fields)
 
@@ -51,6 +68,9 @@ class AuthManager:
                 return User(
                     **user_data
                 )
+            elif response.status_code == 409:
+                fields = self.resolve_user_data_conflicts(**fields)
+                return self.create_user(client, **fields)
 
             response.failure(f"User creation failed with status: {response.status_code}")
             raise RequestException(
