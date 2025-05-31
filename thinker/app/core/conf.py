@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: Optional[str] = os.environ.get('CELERY_BROKER_URL', None)
     CELERY_RESULT_BACKEND: Optional[str] = os.environ.get('CELERY_RESULT_BACKEND', None)
 
+    TASK_CALLBACK_URL: Optional[str] = os.environ.get('TASK_CALLBACK_URL', None)
+    TASK_SIGNATURE_KEY: Optional[str] = os.environ.get('TASK_SIGNATURE_KEY', None)
+
     class Config:
         frozen = True
         case_sensitive = True
