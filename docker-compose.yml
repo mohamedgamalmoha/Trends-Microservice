@@ -65,6 +65,7 @@ services:
             - ./thinker:/app
         networks:
             - internal-network
+            - global-network
         depends_on:
             - thinker-serv
             - redis
@@ -104,19 +105,19 @@ services:
             - trends-serv
             - redis
 
-    flower-serv:
-        image: mher/flower:2.0.0
-        container_name: flower-con
-        command: [ 'flower', '--broker=redis://redis:6379', '--port=5555']
-        restart: always
-        volumes:
-            - flower_data:/var/lib/data
-        networks:
-            - internal-network
-        depends_on:
-            - redis
-        expose:
-            - '5555'
+    # flower-serv:
+    #     image: mher/flower:2.0.0
+    #     container_name: flower-con
+    #     command: [ 'flower', '--broker=redis://redis:6379', '--port=5555']
+    #     restart: always
+    #     volumes:
+    #         - flower_data:/var/lib/data
+    #     networks:
+    #         - internal-network
+    #     depends_on:
+    #         - redis
+    #     expose:
+    #         - '5555'
 
     simulator-serv:
         container_name: simulator-con
@@ -146,7 +147,7 @@ services:
         depends_on:
             - users-serv
             - trends-serv
-            - flower-serv
+            # - flower-serv
 
     prometheus:
         image: prom/prometheus:latest

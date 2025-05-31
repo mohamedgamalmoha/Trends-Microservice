@@ -6,7 +6,7 @@ from shared_utils.async_handler import AsyncHandler
 
 from app.core.conf import settings
 from app.utils import split_think_content
-from app.celery.base_task import ThinkTask
+from app.celery.backend import ThinkTask
 
 
 @shared_task(

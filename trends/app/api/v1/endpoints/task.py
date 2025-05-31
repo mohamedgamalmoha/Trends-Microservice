@@ -50,10 +50,10 @@ async def create_task_route(
         ** task.model_dump()
     )
 
-    trends_search_task.apply_async(
-        kwargs=task.custom_model_dump(exclude=['user_id', 'schedule_at']),
-        task_id=task_id
-    )
+    # trends_search_task.apply_async(
+    #     kwargs=task.custom_model_dump(exclude=['user_id', 'schedule_at']),
+    #     task_id=task_id
+    # )
 
     return db_task
 
