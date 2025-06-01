@@ -101,6 +101,7 @@ services:
             - ./trends:/app
         networks:
             - internal-network
+            - global-network
         depends_on:
             - trends-serv
             - redis
@@ -147,7 +148,7 @@ services:
         depends_on:
             - users-serv
             - trends-serv
-            - flower-serv
+            - thinker-serv
 
     prometheus:
         image: prom/prometheus:latest
