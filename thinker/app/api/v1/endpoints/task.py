@@ -1,15 +1,16 @@
 from typing import Annotated
 
 from celery import uuid
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, HTTPException, Header, Depends, Query, status
 from shared_utils import messages
 from shared_utils.schemas.user import User
 from shared_utils.exceptions import ObjDoesNotExist
 from shared_utils.api.deps.user import get_current_user, get_current_admin_user
 from shared_utils.pagination import PageNumberPaginationQueryParams, PageNumberPaginationResponse, PageNumberPaginator
 
+from app.core.security import verify_task_signature
 from app.services.task import TaskService, get_task_service
-from app.schemas.task import TaskCreate, TaskRetrieve
+from app.schemas.task import TaskCreate, TaskRetrieve, ThinkTaskUpdate
 from app.celery.tasks import think_task
 
 
@@ -260,3 +261,59 @@ async def delete_task_route(
         )
 
     await task_service.delete(id=db_task.id)
+
+
+@task_router.put("/task/{task_id}/callback/", response_model=None, status_code=status.HTTP_204_NO_CONTENT,
+                 tags=["callback"])
+async def callback_task_route(
+        task_id: str,
+        payload: ThinkTaskUpdate,
+        x_signature: str = Header(alias="X-Signature"),
+        task_service: TaskService = Depends(get_task_service)
+    ) -> None:
+    """
+    Handle task callback.
+
+    This endpoint is used to update the status of a task after it has been processed.
+    It verifies the signature of the request to ensure it is valid and then updates the task
+    in the database with the provided data.
+
+    Args:
+        - task_id (str): The ID of the task to update.
+        - payload (ThinkTaskUpdate): The data to update the task with.
+        - x_signature (str): The signature of the request for verification.
+        - task_service (TaskService): The task service instance.
+
+    Returns:
+        - None: No content is returned on successful update.
+
+    Raises:
+        - HTTPException: If the signature is invalid or if the task is not found.
+    """
+
+    if not verify_task_signature(message=task_id, signature=x_signature):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=messages.INVALID_TOKEN_MESSAGE
+        )
+
+    try:
+        # Fetch the task to ensure it exists before updating
+        data = payload.model_dump(exclude_unset=True, exclude=("increment_retry_count", ))
+        await task_service.update(
+            id=task_id,
+            **data
+        )
+
+        # Increment retry count if specified in the payload
+        if payload.increment_retry_count is True:
+            await task_service.increment_retry_count(
+                id=task_id,
+                increment_by=payload.increment_retry_count
+            )
+
+    except ObjDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=messages.TASK_NOT_FOUND_MESSAGE
+        )
