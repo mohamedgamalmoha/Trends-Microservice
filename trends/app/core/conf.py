@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     
     USER_AUTH_URL: Optional[str] = os.environ.get('USER_AUTH_URL', None)
 
+    TASK_CALLBACK_URL: Optional[str] = os.environ.get('TASK_CALLBACK_URL', None)
+    TASK_SIGNATURE_KEY: Optional[str] = os.environ.get('TASK_SIGNATURE_KEY', None)
+
     class Config:
         frozen = True
         case_sensitive = True
