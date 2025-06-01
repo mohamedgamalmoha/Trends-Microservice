@@ -16,8 +16,10 @@ class ThinkTask(Task):
     def _get_request_headers(task_id: str) -> Dict[str, str]:
         """
         Helper method to get the headers for the request.
+        
         Args:
             - task_id (str): Unique id of the task.
+        
         Returns:
             - Dict: Headers for the request.
         """
@@ -35,13 +37,11 @@ class ThinkTask(Task):
             - task_id (str): Unique id of the task.
             - pyload (Dict): Data to be sent in the request.
         """
-        print(f"task id: {task_id}", pyload)
-        response = requests.put(
+        requests.put(
             f'{settings.TASK_CALLBACK_URL}/task/{task_id}/callback/',
             headers=self._get_request_headers(task_id),
             json=pyload
         )
-        print(f"Task {task_id} callback response: {response.status_code} - {response.text}")
 
     def before_start(self, task_id: str, args: tuple, kwargs: dict) -> None:
         """
