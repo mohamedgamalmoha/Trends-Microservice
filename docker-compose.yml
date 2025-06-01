@@ -65,6 +65,7 @@ services:
             - ./thinker:/app
         networks:
             - internal-network
+            - global-network
         depends_on:
             - thinker-serv
             - redis
