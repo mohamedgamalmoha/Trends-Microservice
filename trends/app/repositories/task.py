@@ -99,7 +99,7 @@ class TaskModelRepository(SQLAlchemyModelRepository[Task]):
         Raises:
             - ObjDoesNotExist: If no instance is found with the given ID.
         """
-        task = self.get_by_id(id=id)
+        task = await self.get_by_id(id=id)
         increment_count = task.retry_count + increment_by
         return await self.update(id=id, retry_count=increment_count)
 
