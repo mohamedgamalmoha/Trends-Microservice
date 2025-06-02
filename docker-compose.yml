@@ -150,6 +150,19 @@ services:
             - trends-serv
             - thinker-serv
 
+    jaeger:
+        image: jaegertracing/all-in-one:1.45
+        ports:
+            - "16686:16686"  # Jaeger UI
+            - "14250:14250"  # gRPC
+            - "4317:4317"    # OTLP gRPC receiver
+            - "4318:4318"    # OTLP HTTP receiver
+        environment:
+            - COLLECTOR_OTLP_ENABLED=true
+        networks:
+            - internal-network
+            - global-network
+
     prometheus:
         image: prom/prometheus:latest
         restart: unless-stopped
